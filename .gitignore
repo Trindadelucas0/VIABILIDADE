@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+dist
+.env
+.env.*
+!.env.example
+storage/products
+public/sw.js
+public/sw.js.map
+public/swe-worker*
+*.tsbuildinfo
+npm-debug.log*

@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING
+  READY_FOR_ANALYSIS
+  ANALYZED
+  ARCHIVED
+}
+
+enum Classification {
+  RUIM
+  FRACO
+  MEDIO
+  BOM
+  EXCELENTE
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  role         Role
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  sessions     Session[]
+  products     Product[]  @relation("ProductCreator")
+  suppliers    Supplier[] @relation("SupplierCreator")
+  analyses     Analysis[] @relation("AnalysisCreator")
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Supplier {
+  id        String    @id @default(uuid()) @db.Uuid
+  number    String?
+  name      String
+  phone     String?
+  notes     String?
+  createdBy String    @map("created_by") @db.Uuid
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  creator   User      @relation("SupplierCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  products  Product[]
+
+  @@index([createdBy])
+  @@map("suppliers")
+}
+
+model Product {
+  id                   String         @id @default(uuid()) @db.Uuid
+  name                 String
+  code                 String?
+  segment              String?
+  stand                String?
+  notes                String?
+  fairPriceUsd         Decimal?       @map("fair_price_usd") @db.Decimal(14, 4)
+  currency             String         @default("USD")
+  brazilPriceBrl       Decimal?       @map("brazil_price_brl") @db.Decimal(14, 4)
+  brazilPriceNotes     String?        @map("brazil_price_notes")
+  brazilPriceReference String?        @map("brazil_price_reference")
+  status               ProductStatus  @default(PENDING)
+  supplierId           String?        @map("supplier_id") @db.Uuid
+  createdBy            String         @map("created_by") @db.Uuid
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+  supplier             Supplier?      @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  creator              User           @relation("ProductCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  images               ProductImage[]
+  analyses             Analysis[]
+
+  @@index([createdBy])
+  @@index([status])
+  @@index([supplierId])
+  @@map("products")
+}
+
+model ProductImage {
+  id         String   @id @default(uuid()) @db.Uuid
+  productId  String   @map("product_id") @db.Uuid
+  storageKey String   @map("storage_key")
+  mimeType   String   @map("mime_type")
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model FinancialParameter {
+  id                  String   @id @default(uuid()) @db.Uuid
+  version             Int      @unique
+  exchangeRate        Decimal? @map("exchange_rate") @db.Decimal(14, 6)
+  importTaxRate       Decimal? @map("import_tax_rate") @db.Decimal(8, 6)
+  nationalizationRate Decimal? @map("nationalization_rate") @db.Decimal(8, 6)
+  freightRate         Decimal? @map("freight_rate") @db.Decimal(8, 6)
+  salesTaxRate        Decimal  @map("sales_tax_rate") @db.Decimal(8, 6)
+  operationalCostRate Decimal  @map("operational_cost_rate") @db.Decimal(8, 6)
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("financial_parameters")
+}
+
+model AnalysisParameterSnapshot {
+  id                  String   @id @default(uuid()) @db.Uuid
+  parameterVersion    Int      @map("parameter_version")
+  exchangeRate        Decimal  @map("exchange_rate") @db.Decimal(14, 6)
+  importTaxRate       Decimal  @map("import_tax_rate") @db.Decimal(8, 6)
+  nationalizationRate Decimal  @map("nationalization_rate") @db.Decimal(8, 6)
+  freightRate         Decimal  @map("freight_rate") @db.Decimal(8, 6)
+  salesTaxRate        Decimal  @map("sales_tax_rate") @db.Decimal(8, 6)
+  operationalCostRate Decimal  @map("operational_cost_rate") @db.Decimal(8, 6)
+  createdAt           DateTime @default(now()) @map("created_at")
+  analysis            Analysis?
+
+  @@map("analysis_parameter_snapshots")
+}
+
+model Analysis {
+  id                 String                      @id @default(uuid()) @db.Uuid
+  productId          String                      @map("product_id") @db.Uuid
+  createdBy          String                      @map("created_by") @db.Uuid
+  sequence           Int
+  fairPriceUsd       Decimal                     @map("fair_price_usd") @db.Decimal(14, 4)
+  marketPriceBrl     Decimal                     @map("market_price_brl") @db.Decimal(14, 4)
+  fobBrl             Decimal                     @map("fob_brl") @db.Decimal(14, 4)
+  importTaxBrl       Decimal                     @map("import_tax_brl") @db.Decimal(14, 4)
+  nationalizationBrl Decimal                     @map("nationalization_brl") @db.Decimal(14, 4)
+  freightOtherBrl    Decimal                     @map("freight_other_brl") @db.Decimal(14, 4)
+  finalCostBrl       Decimal                     @map("final_cost_brl") @db.Decimal(14, 4)
+  grossResultBrl     Decimal                     @map("gross_result_brl") @db.Decimal(14, 4)
+  salesTaxBrl        Decimal                     @map("sales_tax_brl") @db.Decimal(14, 4)
+  operationalCostBrl Decimal                     @map("operational_cost_brl") @db.Decimal(14, 4)
+  netResultBrl       Decimal                     @map("net_result_brl") @db.Decimal(14, 4)
+  netMargin          Decimal                     @map("net_margin") @db.Decimal(12, 6)
+  classification     Classification
+  parameterVersion   Int                         @map("parameter_version")
+  snapshotId         String                      @unique @map("snapshot_id") @db.Uuid
+  createdAt          DateTime                    @default(now()) @map("created_at")
+  product            Product                     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  creator            User                        @relation("AnalysisCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  snapshot           AnalysisParameterSnapshot   @relation(fields: [snapshotId], references: [id], onDelete: Restrict)
+
+  @@unique([productId, sequence])
+  @@index([productId, createdAt])
+  @@map("analyses")
+}

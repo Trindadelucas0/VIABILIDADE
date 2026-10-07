@@ -1,0 +1,1597 @@
+# TRD — DOCUMENTO TÉCNICO DE REQUISITOS
+
+## Sistema de Cadastro e Análise de Produtos em Feira Internacional
+
+**Versão:** 1.0
+**Status:** Planejamento técnico
+**Objetivo:** Especificar tecnicamente o sistema responsável por cadastrar produtos encontrados em uma feira internacional e permitir a análise imediata de viabilidade de importação sempre que os dados necessários estiverem disponíveis.
+
+---
+
+# 1. VISÃO GERAL
+
+O sistema será uma aplicação web responsiva, com comportamento de PWA, destinada ao uso durante uma feira internacional.
+
+O usuário encontrará produtos, registrará as informações diretamente pelo celular e poderá realizar a análise financeira imediatamente.
+
+O sistema não deve depender do encerramento da feira para realizar a análise.
+
+A regra principal do sistema é:
+
+> **Se tenho os dados, analiso agora. Se não tenho, cadastro e continuo depois.**
+
+O sistema deverá permitir:
+
+* cadastrar produtos;
+* tirar ou adicionar fotos;
+* cadastrar produtos sem foto;
+* adicionar fotos posteriormente;
+* cadastrar informações do fornecedor;
+* registrar preço encontrado na feira;
+* informar preço de mercado no Brasil;
+* analisar imediatamente quando os dados estiverem completos;
+* salvar produtos pendentes quando faltarem dados;
+* completar os dados posteriormente;
+* reanalisar produtos;
+* manter histórico das análises;
+* analisar vários produtos em lote;
+* comparar produtos;
+* visualizar o prontuário completo de cada produto;
+* manter os parâmetros financeiros centralizados;
+* preservar os parâmetros utilizados em cada análise.
+
+A decisão final de importar ou não importar sempre pertence ao usuário.
+
+---
+
+# 2. PRINCÍPIO OPERACIONAL
+
+O fluxo principal deve funcionar desta maneira:
+
+```text
+ENCONTROU PRODUTO
+        ↓
+CADASTRAR PRODUTO
+        ↓
+INFORMAR DADOS DISPONÍVEIS
+        ↓
+DADOS SUFICIENTES PARA ANÁLISE?
+       / \
+     SIM  NÃO
+      ↓    ↓
+ANALISAR  SALVAR PENDENTE
+AGORA         ↓
+      CONTINUAR DEPOIS
+             ↓
+       COMPLETAR DADOS
+             ↓
+           ANALISAR
+```
+
+O sistema deve evitar obrigar o usuário a preencher informações que não estejam disponíveis naquele momento.
+
+---
+
+# 3. OBJETIVOS TÉCNICOS
+
+O sistema deve:
+
+1. Priorizar velocidade de cadastro.
+2. Ser otimizado para uso em celular.
+3. Permitir cadastro com poucos campos inicialmente.
+4. Permitir complementação posterior.
+5. Centralizar a lógica financeira.
+6. Evitar duplicação da lógica de cálculo.
+7. Permitir análise imediata.
+8. Permitir reanálise.
+9. Preservar histórico.
+10. Permitir comparação entre produtos.
+11. Permitir análise individual e em lote.
+12. Separar dados do produto dos parâmetros financeiros.
+13. Manter rastreabilidade das análises realizadas.
+
+---
+
+# 4. ESCOPO FUNCIONAL
+
+## 4.1 Cadastro de produto
+
+Cada produto deverá possuir:
+
+* ID;
+* nome;
+* descrição/observações;
+* fotos;
+* preço na China/feira;
+* moeda;
+* preço convertido para reais;
+* stand/estande;
+* segmento;
+* referência/número do fornecedor;
+* fornecedor;
+* telefone do fornecedor;
+* preço médio/mercado no Brasil;
+* data de cadastro;
+* data de atualização;
+* status do cadastro.
+
+---
+
+# 5. PRODUTO SEM IMAGEM
+
+A imagem não é obrigatória para criar o produto.
+
+O sistema deverá permitir:
+
+```text
+Cadastrar produto
+      ↓
+Sem foto
+      ↓
+Salvar
+      ↓
+Adicionar foto posteriormente
+```
+
+Também deverá permitir múltiplas imagens por produto.
+
+Exemplo:
+
+```text
+Produto
+├── Foto frontal
+├── Foto lateral
+├── Foto da embalagem
+├── Foto da etiqueta
+└── Foto do fornecedor
+```
+
+---
+
+# 6. FORNECEDOR
+
+O fornecedor deverá possuir estrutura própria.
+
+Campos:
+
+* ID;
+* nome;
+* referência/número;
+* telefone;
+* observações;
+* data de cadastro;
+* data de atualização.
+
+Um fornecedor poderá possuir vários produtos.
+
+Relacionamento:
+
+```text
+FORNECEDOR
+     │
+     ├── PRODUTO
+     ├── PRODUTO
+     └── PRODUTO
+```
+
+---
+
+# 7. FOTOS
+
+As imagens deverão ser armazenadas separadamente dos dados principais do produto.
+
+Estrutura conceitual:
+
+```text
+PRODUCT
+   │
+   └── PRODUCT_IMAGE
+          ├── image_url
+          ├── storage_key
+          ├── sort_order
+          ├── created_at
+          └── metadata
+```
+
+Cada produto poderá possuir várias imagens.
+
+O sistema deverá permitir:
+
+* adicionar;
+* visualizar;
+* remover;
+* reorganizar;
+* definir imagem principal.
+
+---
+
+# 8. STATUS DO PRODUTO
+
+O status operacional do produto deverá ser independente da classificação financeira.
+
+Sugestão:
+
+```text
+DRAFT
+PENDING
+READY_FOR_ANALYSIS
+ANALYZED
+ARCHIVED
+```
+
+### DRAFT
+
+Cadastro ainda não concluído.
+
+### PENDING
+
+Produto salvo, mas faltam informações necessárias para análise.
+
+### READY_FOR_ANALYSIS
+
+Possui os dados necessários para análise.
+
+### ANALYZED
+
+Possui pelo menos uma análise realizada.
+
+### ARCHIVED
+
+Produto arquivado e retirado do fluxo operacional principal.
+
+---
+
+# 9. REGRA DE COMPLETUDE
+
+O sistema deverá possuir uma regra central para determinar se um produto pode ser analisado.
+
+Exemplo conceitual:
+
+```text
+canAnalyze(product)
+```
+
+Essa função não deverá ficar espalhada pelos componentes da interface.
+
+Ela deverá pertencer à camada de domínio/aplicação.
+
+Exemplo:
+
+```text
+Produto possui:
+- preço na feira
+- moeda
+- preço Brasil
+- dados necessários para cálculo
+        ↓
+      SIM
+        ↓
+Pode analisar
+```
+
+Caso falte alguma informação:
+
+```text
+Não pode analisar
+        ↓
+Salvar como pendente
+        ↓
+Mostrar o que está faltando
+```
+
+Exemplo de retorno:
+
+```text
+Pendências:
+
+[ ] Preço de mercado no Brasil
+[✓] Preço na China
+[✓] Moeda
+[✓] Fornecedor
+[✓] Produto
+```
+
+---
+
+# 10. FLUXO DE CADASTRO
+
+O cadastro deverá ser otimizado para uso em campo.
+
+Fluxo:
+
+```text
+NOVO PRODUTO
+     ↓
+FOTO
+     ↓
+INFORMAÇÕES BÁSICAS
+     ↓
+PREÇO
+     ↓
+FORNECEDOR
+     ↓
+MERCADO BRASILEIRO
+     ↓
+VALIDAÇÃO
+     ↓
+ANALISAR AGORA
+```
+
+Entretanto, nenhuma dessas etapas deverá impedir o salvamento do produto caso determinada informação ainda não esteja disponível.
+
+---
+
+# 11. AÇÃO "SALVAR E ANALISAR"
+
+Quando o produto possuir os dados necessários, deverá existir uma ação clara:
+
+```text
+[ SALVAR E ANALISAR ]
+```
+
+Ao executar:
+
+```text
+Cadastro
+   ↓
+Persistência do produto
+   ↓
+Validação dos dados
+   ↓
+Criação da análise
+   ↓
+Cálculo
+   ↓
+Classificação
+   ↓
+Exibição do resultado
+```
+
+O usuário deverá chegar ao resultado sem precisar sair do cadastro e procurar posteriormente o produto.
+
+---
+
+# 12. AÇÃO "SALVAR PENDENTE"
+
+Quando não houver dados suficientes:
+
+```text
+[ SALVAR PENDENTE ]
+```
+
+O sistema deverá salvar o produto e informar claramente o que falta.
+
+Exemplo:
+
+```text
+Produto salvo.
+
+Análise pendente porque falta:
+
+• Preço médio no Brasil
+```
+
+Posteriormente:
+
+```text
+Produto
+   ↓
+Completar informação
+   ↓
+[ ANALISAR ]
+   ↓
+Resultado
+```
+
+---
+
+# 13. ANÁLISE FINANCEIRA
+
+A análise deverá utilizar a estrutura da planilha de referência:
+
+* Modelo;
+* Produto;
+* Média de mercado (R$);
+* FOB convertido (R$);
+* Impostos importação (R$);
+* Nacionalização (R$);
+* Frete + outros (R$);
+* Custo final China (R$);
+* Resultado bruto (R$);
+* Impostos venda 8% (R$);
+* Custo operacional 5% (R$);
+* Resultado líquido (R$);
+* Margem líquida;
+* Classificação.
+
+Os cálculos exatos de alguns componentes deverão seguir a fórmula financeira definida para o sistema.
+
+O TRD não deverá inventar fórmulas que não estejam formalmente definidas na regra financeira.
+
+---
+
+# 14. FLUXO CONCEITUAL DE CÁLCULO
+
+A estrutura conceitual será:
+
+```text
+FOB CONVERTIDO
+      +
+IMPOSTOS DE IMPORTAÇÃO
+      +
+NACIONALIZAÇÃO
+      +
+FRETE + OUTROS
+      =
+CUSTO FINAL
+```
+
+Depois:
+
+```text
+PREÇO BRASIL
+      -
+CUSTO FINAL
+      =
+RESULTADO BRUTO
+```
+
+Depois:
+
+```text
+RESULTADO BRUTO
+      -
+IMPOSTOS SOBRE VENDA
+      -
+CUSTO OPERACIONAL
+      =
+RESULTADO LÍQUIDO
+```
+
+Depois:
+
+```text
+RESULTADO LÍQUIDO
+        ↓
+MARGEM LÍQUIDA
+        ↓
+CLASSIFICAÇÃO
+```
+
+---
+
+# 15. PARÂMETROS FINANCEIROS
+
+Os parâmetros deverão ser centralizados.
+
+Não deverão ser digitados manualmente pelo usuário a cada análise.
+
+Parâmetros atualmente definidos:
+
+```text
+Imposto sobre venda: 8%
+Custo operacional: 5%
+```
+
+Classificação:
+
+| Margem      | Classificação | Interpretação                       |
+| ----------- | ------------- | ----------------------------------- |
+| Até 10%     | RUIM          | Não compensa nas premissas atuais   |
+| >10% e <15% | FRACO         | Margem apertada; renegociar custo   |
+| 15% e <20%  | MÉDIO         | Avaliar giro, garantia e risco      |
+| 20% e <25%  | BOM           | Operação atrativa                   |
+| ≥25%        | EXCELENTE     | Prioridade para validação comercial |
+
+---
+
+# 16. VERSIONAMENTO DOS PARÂMETROS
+
+As análises não deverão depender somente dos parâmetros atuais.
+
+Quando uma análise for criada, deverá ser armazenado um snapshot dos parâmetros utilizados.
+
+Exemplo:
+
+```text
+ANÁLISE #001
+
+Parâmetros:
+sales_tax = 8%
+operational_cost = 5%
+
+Versão:
+v1
+```
+
+Posteriormente:
+
+```text
+Parâmetros atuais:
+
+sales_tax = 9%
+operational_cost = 6%
+```
+
+A análise antiga continuará mostrando os valores originais.
+
+Isso é necessário para garantir histórico e rastreabilidade.
+
+---
+
+# 17. ESTRUTURA CONCEITUAL DO DOMÍNIO
+
+```text
+Product
+   │
+   ├── Supplier
+   │
+   ├── ProductImage[]
+   │
+   └── Analysis[]
+          │
+          └── AnalysisParameterSnapshot
+```
+
+Entidades principais:
+
+```text
+PRODUCT
+SUPPLIER
+PRODUCT_IMAGE
+ANALYSIS
+ANALYSIS_PARAMETER_SNAPSHOT
+FINANCIAL_PARAMETER
+```
+
+---
+
+# 18. ANÁLISE
+
+Cada análise deverá possuir:
+
+* ID;
+* product_id;
+* data/hora;
+* usuário responsável;
+* valores de entrada;
+* valores calculados;
+* resultado bruto;
+* resultado líquido;
+* margem;
+* classificação;
+* snapshot dos parâmetros;
+* versão da análise.
+
+Exemplo:
+
+```text
+Analysis
+├── product_id
+├── created_at
+├── created_by
+├── market_price_brl
+├── fob_brl
+├── import_tax_brl
+├── nationalization_brl
+├── freight_other_brl
+├── final_cost_brl
+├── gross_result_brl
+├── sales_tax_brl
+├── operational_cost_brl
+├── net_result_brl
+├── net_margin
+├── classification
+└── parameter_snapshot
+```
+
+---
+
+# 19. HISTÓRICO
+
+O sistema não deverá sobrescrever uma análise anterior.
+
+Exemplo:
+
+```text
+Produto X
+
+Análise #1
+Margem: 12%
+Classificação: FRACO
+
+Análise #2
+Margem: 18%
+Classificação: MÉDIO
+
+Análise #3
+Margem: 26%
+Classificação: EXCELENTE
+```
+
+Isso permitirá entender como a decisão mudou conforme novos dados foram inseridos.
+
+---
+
+# 20. REANÁLISE
+
+O usuário poderá executar:
+
+```text
+[ REANALISAR ]
+```
+
+A reanálise deverá criar uma nova análise.
+
+Não deverá apagar a anterior.
+
+Fluxo:
+
+```text
+ANÁLISE EXISTENTE
+       ↓
+ALTERAÇÃO DOS DADOS
+       ↓
+REANALISAR
+       ↓
+NOVA ANÁLISE
+```
+
+---
+
+# 21. ANÁLISE EM LOTE
+
+O sistema deverá permitir selecionar vários produtos.
+
+Exemplo:
+
+```text
+☑ Produto A
+☑ Produto B
+☑ Produto C
+☐ Produto D
+```
+
+Ação:
+
+```text
+[ ANALISAR SELECIONADOS ]
+```
+
+O sistema deverá:
+
+1. verificar os produtos;
+2. identificar quais possuem dados suficientes;
+3. analisar os elegíveis;
+4. informar os pendentes;
+5. não bloquear toda a operação por causa de um produto incompleto.
+
+Resultado:
+
+```text
+3 produtos selecionados
+
+✓ Produto A — EXCELENTE
+✓ Produto B — BOM
+⚠ Produto C — Pendente: falta preço Brasil
+```
+
+---
+
+# 22. COMPARAÇÃO
+
+O sistema deverá permitir selecionar produtos para comparação.
+
+Exemplo:
+
+```text
+Produto A
+Produto B
+Produto C
+```
+
+Comparação:
+
+| Produto | Custo Final | Resultado Líquido | Margem | Classificação |
+| ------- | ----------: | ----------------: | -----: | ------------- |
+| A       |        R$ X |              R$ X |     X% | BOM           |
+| B       |        R$ X |              R$ X |     X% | EXCELENTE     |
+| C       |        R$ X |              R$ X |     X% | MÉDIO         |
+
+A comparação deverá utilizar análises existentes.
+
+---
+
+# 23. PRONTUÁRIO DO PRODUTO
+
+Cada produto deverá possuir uma tela central de informações.
+
+Estrutura:
+
+```text
+PRONTUÁRIO DO PRODUTO
+
+┌──────────────────────────────┐
+│ Fotos                        │
+├──────────────────────────────┤
+│ Produto                      │
+│ Fornecedor                   │
+│ Stand                        │
+│ Segmento                     │
+│ Referência                   │
+│ Telefone                     │
+├──────────────────────────────┤
+│ Preço Feira                  │
+│ Preço Brasil                 │
+├──────────────────────────────┤
+│ RESULTADO DA ANÁLISE         │
+│                              │
+│ Custo final                  │
+│ Resultado líquido            │
+│ Margem                       │
+│ Classificação                │
+├──────────────────────────────┤
+│ Histórico de análises        │
+├──────────────────────────────┤
+│ [ REANALISAR ]               │
+└──────────────────────────────┘
+```
+
+---
+
+# 24. CATÁLOGO DE PRODUTOS
+
+O catálogo deverá permitir visualizar rapidamente os produtos cadastrados.
+
+Cada card poderá apresentar:
+
+```text
+[ FOTO ]
+
+Nome do produto
+Fornecedor
+Stand
+
+Preço feira
+Preço Brasil
+
+Margem: 24%
+BOM
+
+Status:
+ANALISADO
+```
+
+Para produtos pendentes:
+
+```text
+PENDENTE
+
+Falta:
+Preço Brasil
+```
+
+---
+
+# 25. FILTROS
+
+O catálogo deverá permitir filtros por:
+
+* segmento;
+* fornecedor;
+* stand;
+* status;
+* classificação;
+* margem;
+* analisado;
+* pendente.
+
+Exemplo:
+
+```text
+Classificação:
+[ EXCELENTE ]
+
+Segmento:
+[ Eletrônicos ]
+
+Status:
+[ Analisado ]
+```
+
+---
+
+# 26. DASHBOARD
+
+O dashboard deverá ser útil durante a feira.
+
+Não deve ser apenas um dashboard administrativo.
+
+Informações úteis:
+
+```text
+Produtos cadastrados
+Produtos analisados
+Produtos pendentes
+Produtos EXCELENTES
+Produtos BONS
+Produtos MÉDIOS
+Produtos FRACOS
+Produtos RUINS
+```
+
+Também poderá apresentar:
+
+```text
+Últimos produtos analisados
+Produtos com maior margem
+Produtos pendentes de preenchimento
+```
+
+---
+
+# 27. ARQUITETURA
+
+Stack recomendada:
+
+```text
+Frontend
+Next.js
+React
+TypeScript
+Tailwind CSS
+
+Aplicação
+Next.js App Router
+
+Banco
+PostgreSQL
+
+PWA
+Service Worker
+Web App Manifest
+
+Storage
+Object Storage para imagens
+```
+
+A implementação deverá manter separação clara entre:
+
+```text
+UI
+ ↓
+Application
+ ↓
+Domain
+ ↓
+Infrastructure
+ ↓
+Database
+```
+
+---
+
+# 28. CAMADA DE DOMÍNIO
+
+A regra financeira não deverá ficar dentro de componentes React.
+
+Deverá existir um serviço central de análise.
+
+Conceitualmente:
+
+```text
+AnalysisService
+```
+
+Responsabilidades:
+
+* validar dados;
+* verificar elegibilidade;
+* calcular análise;
+* aplicar parâmetros;
+* gerar classificação;
+* gerar snapshot;
+* retornar resultado.
+
+Exemplo conceitual:
+
+```text
+AnalysisService.analyze(productData, parameters)
+```
+
+---
+
+# 29. REGRA DE NEGÓCIO CENTRAL
+
+Nenhum componente deverá implementar sua própria versão do cálculo.
+
+Evitar:
+
+```text
+Cadastro → calcula de um jeito
+
+Dashboard → calcula de outro jeito
+
+Comparação → calcula novamente
+
+API → calcula novamente
+```
+
+Deve existir uma única fonte de verdade:
+
+```text
+AnalysisService
+```
+
+Todas as interfaces deverão consumir o mesmo resultado.
+
+---
+
+# 30. API
+
+Endpoints conceituais:
+
+```text
+POST   /api/products
+GET    /api/products
+GET    /api/products/:id
+PATCH  /api/products/:id
+DELETE /api/products/:id
+
+POST   /api/products/:id/images
+DELETE /api/products/:id/images/:imageId
+
+POST   /api/products/:id/analysis
+GET    /api/products/:id/analysis
+POST   /api/products/:id/reanalysis
+
+POST   /api/analyses/batch
+POST   /api/analyses/compare
+
+GET    /api/suppliers
+POST   /api/suppliers
+PATCH  /api/suppliers/:id
+
+GET    /api/financial-parameters
+PATCH  /api/financial-parameters
+```
+
+Os endpoints finais deverão ser definidos durante a implementação.
+
+---
+
+# 31. BANCO DE DADOS
+
+Estrutura conceitual:
+
+```text
+users
+suppliers
+products
+product_images
+analyses
+analysis_parameter_snapshots
+financial_parameters
+```
+
+Relacionamentos:
+
+```text
+users
+  │
+  └── analyses
+
+suppliers
+  │
+  └── products
+         │
+         ├── product_images
+         │
+         └── analyses
+                │
+                └── analysis_parameter_snapshots
+```
+
+---
+
+# 32. INTEGRIDADE DOS DADOS
+
+O banco deverá possuir:
+
+* foreign keys;
+* índices;
+* constraints;
+* timestamps;
+* identificadores únicos;
+* validação de valores financeiros;
+* prevenção de registros órfãos.
+
+Valores monetários não deverão utilizar `float` para persistência financeira.
+
+Preferencialmente utilizar:
+
+```text
+DECIMAL / NUMERIC
+```
+
+---
+
+# 33. SEGURANÇA
+
+A aplicação deverá considerar:
+
+* autenticação;
+* autorização;
+* RBAC quando aplicável;
+* proteção contra SQL Injection;
+* proteção contra XSS;
+* validação de entrada;
+* validação de upload;
+* limite de tamanho de imagem;
+* validação de MIME type;
+* controle de acesso aos produtos;
+* logs de operações importantes;
+* proteção das credenciais;
+* variáveis de ambiente;
+* tratamento seguro de erros.
+
+---
+
+# 34. LGPD
+
+Como o sistema armazenará informações de fornecedores e contatos, deverão ser considerados:
+
+* finalidade do armazenamento;
+* controle de acesso;
+* minimização dos dados;
+* proteção dos dados;
+* possibilidade de auditoria;
+* política de retenção;
+* exclusão quando aplicável.
+
+---
+
+# 35. IMAGENS
+
+O upload deverá possuir validações.
+
+Exemplo:
+
+```text
+Arquivo recebido
+      ↓
+Validar MIME
+      ↓
+Validar extensão
+      ↓
+Validar tamanho
+      ↓
+Gerar nome seguro
+      ↓
+Armazenar
+      ↓
+Salvar referência no banco
+```
+
+Nunca confiar somente na extensão fornecida pelo usuário.
+
+---
+
+# 36. PWA
+
+A aplicação deverá possuir comportamento de aplicativo.
+
+Objetivos:
+
+* instalação na tela inicial;
+* interface mobile-first;
+* navegação rápida;
+* acesso facilitado à câmera;
+* experiência otimizada para uso durante a feira.
+
+O comportamento offline completo não deverá ser considerado obrigatório nesta primeira versão sem uma decisão específica de escopo.
+
+---
+
+# 37. CÂMERA
+
+A captura de imagem deverá ser acessível diretamente pelo fluxo de cadastro.
+
+Fluxo:
+
+```text
+Novo produto
+      ↓
+[ TIRAR FOTO ]
+      ↓
+Câmera
+      ↓
+Foto
+      ↓
+Pré-visualização
+      ↓
+Confirmar
+      ↓
+Produto
+```
+
+Também deverá existir:
+
+```text
+[ ADICIONAR DA GALERIA ]
+```
+
+---
+
+# 38. EXPERIÊNCIA DURANTE A FEIRA
+
+O sistema deverá minimizar digitação.
+
+Prioridades:
+
+```text
+1. Velocidade
+2. Clareza
+3. Captura de informação
+4. Análise imediata
+5. Continuidade
+```
+
+O usuário não deverá ser obrigado a preencher informações que não possui.
+
+Exemplo:
+
+```text
+Produto encontrado
+
+Nome: XXXXX
+Preço: ¥120
+Stand: A-23
+Fornecedor: XXXXX
+Telefone: XXXXX
+
+Preço Brasil:
+[ ainda não informado ]
+
+[ SALVAR PENDENTE ]
+```
+
+Depois:
+
+```text
+Preço Brasil:
+R$ 299,90
+
+[ SALVAR E ANALISAR ]
+```
+
+---
+
+# 39. ESTADO DE PENDÊNCIA
+
+A pendência deverá ser explícita.
+
+Exemplo:
+
+```text
+ANÁLISE INDISPONÍVEL
+
+Faltam:
+• Preço médio no Brasil
+
+[ COMPLETAR DADOS ]
+```
+
+O usuário não deverá precisar descobrir sozinho por que o sistema não calculou.
+
+---
+
+# 40. EXPERIÊNCIA DO RESULTADO
+
+Depois da análise:
+
+```text
+ANÁLISE CONCLUÍDA
+
+Produto:
+Produto X
+
+Custo final:
+R$ XXX
+
+Resultado bruto:
+R$ XXX
+
+Resultado líquido:
+R$ XXX
+
+Margem líquida:
+26,4%
+
+CLASSIFICAÇÃO
+
+EXCELENTE
+
+Prioridade para validação comercial.
+```
+
+A decisão de importar continua sendo do usuário.
+
+---
+
+# 41. DECISÃO HUMANA
+
+O sistema não deverá declarar:
+
+```text
+"Compre este produto."
+```
+
+A função do sistema é fornecer suporte à decisão.
+
+O resultado deverá ser apresentado como:
+
+```text
+EXCELENTE
+Operação atrativa segundo as premissas atuais.
+```
+
+ou:
+
+```text
+RUIM
+Não compensa nas premissas atuais.
+```
+
+A decisão final permanece com o usuário.
+
+---
+
+# 42. AUDITORIA
+
+Operações importantes deverão ser rastreáveis.
+
+Exemplos:
+
+```text
+Produto criado
+Produto atualizado
+Imagem adicionada
+Análise criada
+Análise refeita
+Parâmetro alterado
+Produto arquivado
+```
+
+Quando aplicável:
+
+```text
+usuário
+data/hora
+ação
+registro afetado
+```
+
+---
+
+# 43. TESTES
+
+A lógica financeira deverá possuir testes automatizados.
+
+Testar pelo menos:
+
+```text
+Produto com dados completos
+Produto sem preço Brasil
+Produto sem preço China
+Produto sem moeda
+Produto com valores inválidos
+Margem ≤ 10%
+Margem >10% e <15%
+Margem ≥15% e <20%
+Margem ≥20% e <25%
+Margem ≥25%
+```
+
+Também testar:
+
+```text
+Reanálise
+Histórico
+Snapshot dos parâmetros
+Análise em lote
+Produto pendente
+Produto sem imagem
+Produto com múltiplas imagens
+```
+
+---
+
+# 44. CRITÉRIOS DE ACEITE
+
+## Cadastro
+
+* [ ] Usuário consegue cadastrar produto sem imagem.
+* [ ] Usuário consegue adicionar imagem depois.
+* [ ] Usuário consegue adicionar múltiplas imagens.
+* [ ] Usuário consegue informar fornecedor.
+* [ ] Usuário consegue informar preço da feira.
+* [ ] Usuário consegue informar preço brasileiro.
+
+## Análise
+
+* [ ] Produto completo pode ser analisado imediatamente.
+* [ ] Produto incompleto pode ser salvo.
+* [ ] Sistema informa quais dados estão faltando.
+* [ ] Análise utiliza o serviço central.
+* [ ] Resultado apresenta custo final.
+* [ ] Resultado apresenta resultado bruto.
+* [ ] Resultado apresenta resultado líquido.
+* [ ] Resultado apresenta margem.
+* [ ] Resultado apresenta classificação.
+
+## Histórico
+
+* [ ] Nova análise não apaga análise antiga.
+* [ ] Parâmetros utilizados ficam registrados.
+* [ ] Usuário consegue visualizar análises anteriores.
+* [ ] Usuário consegue reanalisar.
+
+## Lote
+
+* [ ] Usuário consegue selecionar múltiplos produtos.
+* [ ] Produtos completos são analisados.
+* [ ] Produtos incompletos permanecem pendentes.
+* [ ] Resultado do lote informa sucesso e pendências.
+
+## Comparação
+
+* [ ] Usuário consegue selecionar produtos.
+* [ ] Sistema apresenta indicadores comparáveis.
+* [ ] Produtos podem ser ordenados por margem.
+
+---
+
+# 45. FLUXO COMPLETO
+
+O fluxo principal do sistema será:
+
+```text
+                    ENCONTROU PRODUTO
+                           │
+                           ▼
+                       FOTOGRAFAR
+                           │
+                           ▼
+                    CADASTRAR PRODUTO
+                           │
+                           ▼
+                    INFORMAR DADOS
+                           │
+                           ▼
+                ┌──────────────────────┐
+                │ DADOS SUFICIENTES?   │
+                └──────────┬───────────┘
+                           │
+                 ┌─────────┴─────────┐
+                 │                   │
+                SIM                 NÃO
+                 │                   │
+                 ▼                   ▼
+             ANALISAR          SALVAR PENDENTE
+                 │                   │
+                 ▼                   │
+             RESULTADO               │
+                 │                   │
+                 │             COMPLETAR DADOS
+                 │                   │
+                 │                   ▼
+                 │                ANALISAR
+                 │                   │
+                 └─────────┬─────────┘
+                           ▼
+                       PRONTUÁRIO
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+         REANÁLISE     COMPARAÇÃO     HISTÓRICO
+             │
+             ▼
+      DECISÃO HUMANA
+```
+
+---
+
+# 46. PRINCÍPIO DE IMPLEMENTAÇÃO
+
+A implementação deverá seguir a seguinte regra:
+
+```text
+UI não possui regra financeira.
+
+API não duplica regra financeira.
+
+Dashboard não recalcula.
+
+Comparação não recalcula.
+
+AnalysisService é a fonte central da verdade.
+```
+
+Fluxo:
+
+```text
+Interface
+   ↓
+Application Service
+   ↓
+Domain
+   ↓
+AnalysisService
+   ↓
+Repository
+   ↓
+PostgreSQL
+```
+
+---
+
+# 47. PRIORIDADE DE IMPLEMENTAÇÃO
+
+## Fase 1 — Fundação
+
+* [ ] Projeto
+* [ ] Banco
+* [ ] Autenticação
+* [ ] Estrutura de domínio
+* [ ] Produto
+* [ ] Fornecedor
+
+## Fase 2 — Cadastro
+
+* [ ] Cadastro rápido
+* [ ] Fotos
+* [ ] Edição
+* [ ] Catálogo
+* [ ] Pendências
+
+## Fase 3 — Análise
+
+* [ ] AnalysisService
+* [ ] Parâmetros
+* [ ] Cálculos
+* [ ] Classificação
+* [ ] Resultado imediato
+
+## Fase 4 — Histórico
+
+* [ ] Histórico
+* [ ] Snapshot
+* [ ] Reanálise
+
+## Fase 5 — Inteligência operacional
+
+* [ ] Análise em lote
+* [ ] Comparação
+* [ ] Dashboard
+* [ ] Filtros
+
+## Fase 6 — PWA
+
+* [ ] Manifest
+* [ ] Instalação
+* [ ] Câmera
+* [ ] Otimização mobile
+
+---
+
+# 48. DECISÕES QUE NÃO DEVEM SER INVENTADAS DURANTE A IMPLEMENTAÇÃO
+
+Antes da implementação final, deverão ser formalmente definidos:
+
+1. Fórmula exata dos impostos de importação.
+2. Fórmula exata da nacionalização.
+3. Fórmula exata de frete + outros.
+4. Fórmula exata da margem líquida.
+5. Fonte/cotação utilizada para conversão cambial.
+6. Se a cotação será manual ou automática.
+7. Se haverá operação offline completa.
+8. Estratégia definitiva de armazenamento das imagens.
+9. Modelo final de autenticação.
+10. Modelo final de permissões.
+
+Essas regras não deverão ser inventadas pelo desenvolvedor apenas para "fazer funcionar".
+
+---
+
+# 49. REGRA FUNDAMENTAL DO PRODUTO
+
+O sistema foi concebido para ser utilizado durante a feira.
+
+Portanto:
+
+```text
+NÃO:
+
+Feira
+ ↓
+Cadastrar tudo
+ ↓
+Voltar para casa
+ ↓
+Analisar depois
+```
+
+O fluxo esperado é:
+
+```text
+Feira
+ ↓
+Encontrar produto
+ ↓
+Cadastrar
+ ↓
+Possui dados?
+ ↓
+SIM
+ ↓
+ANALISAR AGORA
+ ↓
+RESULTADO
+ ↓
+DECIDIR SE VALE INVESTIGAR
+```
+
+Quando faltar informação:
+
+```text
+Feira
+ ↓
+Encontrar produto
+ ↓
+Cadastrar
+ ↓
+Falta informação
+ ↓
+SALVAR PENDENTE
+ ↓
+Continuar feira
+ ↓
+Completar posteriormente
+ ↓
+ANALISAR
+```
+
+---
+
+# 50. DEFINIÇÃO FINAL
+
+O sistema é uma ferramenta operacional de coleta e análise de oportunidades de importação.
+
+Sua função principal não é apenas armazenar produtos.
+
+Sua função é permitir que o usuário:
+
+```text
+ENCONTRE
+   ↓
+REGISTRE
+   ↓
+ANALISE
+   ↓
+COMPARE
+   ↓
+REANALISE
+   ↓
+DECIDA
+```
+
+Tudo isso deverá acontecer preferencialmente durante a feira, com o menor número possível de etapas.
+
+A regra central do produto permanece:
+
+> **Se tenho os dados, analiso agora. Se não tenho, cadastro e continuo depois.**
+
+A análise é suporte à decisão.
+
+**Quem decide é o humano.**

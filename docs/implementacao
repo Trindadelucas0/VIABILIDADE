@@ -1,0 +1,55 @@
+# App flow — rotas reais
+
+Fonte de comportamento: [DOCUMENTACAO-SISTEMA.md](DOCUMENTACAO-SISTEMA.md). Este arquivo só descreve o caminho entre as telas.
+
+## Navegação
+
+```mermaid
+flowchart TD
+  login["/login"] -->|"POST /api/auth/login"| dash["/"]
+  dash -->|"Cadastrar produto"| novo["/produtos/novo"]
+  dash -->|"Card ou Ver produtos"| lista["/produtos"]
+  lista -->|"Toque no card"| pront["/produtos/id"]
+  novo -->|"Salvar e analisar"| result["/produtos/id/resultado"]
+  novo -->|"Salvar pendente ou análise recusada"| pront
+  pront -->|"Analisar"| result
+  result -->|"Ver composição"| comp["/produtos/id/composicao"]
+  result -->|"Alterar parâmetros, admin"| params["/parametros"]
+  lista -->|"Analisar selecionados"| comparar["/comparar"]
+  comparar -->|"Toque na linha"| result
+```
+
+## Gravação e cálculo
+
+```mermaid
+flowchart TD
+  novo["/produtos/novo"] --> post["POST /api/products"]
+  post --> scope["src/server/auth/scope.ts"]
+  scope --> can["src/domain/can-analyze.ts"]
+  can -->|falta dado| pending["status PENDING"]
+  can -->|completo e POST analysis| ana["src/domain/analysis-service.ts"]
+  ana --> snap["analysis_parameter_snapshots"]
+  ana --> row["analyses"]
+  row --> result["/produtos/id/resultado"]
+  pending --> pront["/produtos/id"]
+```
+
+Próximo, na etapa de foto e dados, não grava. O rascunho fica na memória da página.
+
+Salvar e analisar com dados completos abre `/produtos/[id]/resultado`. Se `canAnalyze` falhar, o produto permanece gravado e a tela do prontuário lista o que falta. A interface não trata isso como análise concluída.
+
+## Produto de outro operador
+
+```mermaid
+flowchart TD
+  pront["/produtos/id"] --> get["GET /api/products/id"]
+  get --> scope["scope.ts e RLS"]
+  scope -->|admin ou dono| ok["200"]
+  scope -->|created_by diferente| missing["404 Produto não encontrado"]
+```
+
+O mesmo 404 vale para imagem e análise fora do escopo. Sem cookie, a resposta é 401, antes de ler o arquivo.
+
+## Cache
+
+O service worker (`src/app/sw.ts`) faz precache do shell, CSS, JS e ícones. Navegação é network-first e, sem rede e sem página em cache, abre `/offline`. `/api` é network-only. Não há fila offline nem IndexedDB de produtos.

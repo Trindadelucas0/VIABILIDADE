@@ -1,0 +1,952 @@
+# PRD — Sistema de Cadastro e Análise de Produtos em Feira Internacional
+
+## 1. Visão geral
+
+O sistema será uma aplicação voltada para utilização durante feiras internacionais, principalmente em situações em que o usuário precisa visitar diversos fornecedores, encontrar produtos, registrar preços e informações comerciais e posteriormente avaliar quais produtos apresentam maior potencial de importação e comercialização no Brasil.
+
+A principal proposta é permitir que o usuário faça o cadastro de produtos de maneira extremamente rápida durante a feira, sem precisar preencher formulários complexos.
+
+Após a feira, os produtos cadastrados ficam organizados em um catálogo completo, onde cada produto possui seu próprio prontuário com todas as informações coletadas.
+
+O usuário poderá então analisar os produtos individualmente ou selecionar vários produtos para realizar uma análise em conjunto.
+
+O sistema já deverá possuir parâmetros de análise previamente calibrados, permitindo que o usuário obtenha rapidamente uma avaliação de cada produto.
+
+---
+
+# 2. Objetivo do sistema
+
+O objetivo é transformar o processo de coleta e análise de produtos em uma única experiência organizada.
+
+Durante a feira, o usuário precisa se preocupar principalmente em:
+
+* identificar o produto;
+* fotografá-lo;
+* registrar o preço;
+* identificar o stand;
+* registrar o fornecedor;
+* classificar o segmento;
+* continuar a visita.
+
+Depois, o sistema deverá permitir transformar essas informações em uma análise de viabilidade.
+
+A solução deverá responder, de forma simples:
+
+> "Este produto parece valer a pena importar e vender no Brasil?"
+
+---
+
+# 3. Principais momentos de utilização
+
+O sistema será dividido conceitualmente em três momentos.
+
+## Momento 1 — Coleta na feira
+
+O usuário encontra um produto e realiza rapidamente seu cadastro.
+
+## Momento 2 — Organização
+
+Todos os produtos coletados ficam disponíveis em uma área organizada, permitindo localizar, filtrar e acessar qualquer produto.
+
+## Momento 3 — Análise
+
+O usuário informa ou confirma o preço praticado no Brasil e utiliza os parâmetros previamente calibrados para verificar a viabilidade do produto.
+
+---
+
+# 4. Cadastro rápido de produto
+
+O cadastro deverá ser pensado para situações em que o usuário está andando pela feira e não pode perder tempo.
+
+O usuário poderá começar o cadastro diretamente pela câmera.
+
+Ao fotografar um produto, poderá registrar:
+
+* Nome do produto;
+* Preço encontrado na feira;
+* Stand;
+* Segmento;
+* Número do fornecedor;
+* Nome do fornecedor;
+* Telefone;
+* Observações;
+* Uma ou várias imagens.
+
+Também deverá existir a possibilidade de cadastrar o produto sem imagem.
+
+Nesse caso, o sistema deverá permitir adicionar a imagem posteriormente.
+
+---
+
+# 5. Informações do produto
+
+Cada produto terá um prontuário próprio.
+
+O prontuário deverá concentrar todas as informações relacionadas àquele produto.
+
+### Identificação
+
+* Nome;
+* Código ou identificação, quando aplicável;
+* Segmento;
+* Stand.
+
+### Fornecedor
+
+* Número do fornecedor;
+* Nome;
+* Telefone;
+* Outras informações comerciais registradas.
+
+### Registro da feira
+
+* Preço informado pelo fornecedor;
+* Fotografias;
+* Observações;
+* Data do cadastro.
+
+### Mercado brasileiro
+
+* Preço praticado no Brasil;
+* Observações sobre o preço;
+* Referência utilizada pelo usuário.
+
+O preço praticado no Brasil será informado manualmente pelo usuário.
+
+---
+
+# 6. Galeria de imagens
+
+Um produto poderá possuir várias imagens.
+
+Isso é importante porque o usuário pode precisar registrar:
+
+* visão geral do produto;
+* embalagem;
+* etiqueta;
+* especificações;
+* catálogo;
+* cartão do fornecedor;
+* detalhes do produto;
+* outras informações relevantes.
+
+A imagem principal deverá aparecer no catálogo.
+
+As demais poderão ser visualizadas dentro do prontuário.
+
+---
+
+# 7. Catálogo de produtos
+
+Depois que os produtos forem cadastrados, o usuário terá uma visão geral de tudo que foi coletado.
+
+Cada produto deverá aparecer de forma visual, permitindo identificação rápida.
+
+Exemplo:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ PRODUTOS DA FEIRA                                           │
+│                                                             │
+│ 🔎 Buscar produto...       Segmento ▼   Status ▼            │
+│                                                             │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐          │
+│ │              │ │              │ │              │          │
+│ │    FOTO      │ │    FOTO      │ │    FOTO      │          │
+│ │              │ │              │ │              │          │
+│ ├──────────────┤ ├──────────────┤ ├──────────────┤          │
+│ │ Produto A    │ │ Produto B    │ │ Produto C    │          │
+│ │ US$ 12,00    │ │ US$ 18,50    │ │ US$ 7,20     │          │
+│ │ Stand 302    │ │ Stand 118    │ │ Stand 450    │          │
+│ │ ⚠ Pendente   │ │ ✓ Analisado  │ │ ✓ Excelente  │          │
+│ └──────────────┘ └──────────────┘ └──────────────┘          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+O usuário poderá:
+
+* pesquisar;
+* filtrar;
+* abrir um produto;
+* selecionar vários produtos;
+* iniciar uma análise em lote;
+* visualizar produtos ainda não analisados;
+* visualizar produtos já analisados.
+
+---
+
+# 8. Status dos produtos
+
+Para facilitar a organização, cada produto poderá apresentar um status.
+
+Exemplos:
+
+**Novo**
+
+Produto recém-cadastrado.
+
+**Pendente de informações**
+
+Falta alguma informação necessária.
+
+**Pronto para análise**
+
+Produto possui informações suficientes para análise.
+
+**Analisado**
+
+Produto já passou pela análise.
+
+**Boa oportunidade**
+
+Produto apresentou resultado interessante.
+
+**Excelente oportunidade**
+
+Produto apresentou resultado considerado prioritário.
+
+---
+
+# 9. Prontuário do produto
+
+Ao clicar em um produto, o usuário deverá entrar em uma tela completa com todas as informações daquele produto.
+
+Essa tela será uma das principais do sistema.
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ ← Voltar                         PRODUTO                     │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│ ┌──────────────────────┐   FECHADURA 280 KG                 │
+│ │                      │   Segmento: Segurança              │
+│ │       FOTO           │   Stand: A302                       │
+│ │                      │                                     │
+│ └──────────────────────┘   Preço na feira: US$ 12,50       │
+│                                                              │
+│ [Foto 1] [Foto 2] [Foto 3] [Foto 4]                        │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│ FORNECEDOR                                                   │
+│                                                              │
+│ Número: 3021                                                 │
+│ Nome: Shenzhen Example Technology                            │
+│ Telefone: +86 XX XXXXX XXXX                                  │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│ MERCADO BRASILEIRO                                           │
+│                                                              │
+│ Preço praticado no Brasil: R$ ________                       │
+│                                                              │
+│ [ Informar preço ]                                           │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│ ANÁLISE                                                      │
+│                                                              │
+│ Custo final:       R$ 00,00                                  │
+│ Resultado bruto:   R$ 00,00                                  │
+│ Resultado líquido: R$ 00,00                                  │
+│ Margem líquida:    00,00%                                    │
+│                                                              │
+│              🟢 BOM                                         │
+│                                                              │
+│ [ Ver análise completa ]                                     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 10. Análise de viabilidade
+
+A análise utilizará parâmetros previamente calibrados no sistema.
+
+O usuário não precisará configurar todos os valores para cada produto.
+
+Os parâmetros poderão ser ajustados quando necessário, mas o sistema deverá possuir uma configuração padrão.
+
+Entre os parâmetros considerados estão:
+
+* conversão do preço;
+* impostos de importação;
+* nacionalização;
+* frete e outros custos;
+* impostos sobre a venda;
+* custo operacional.
+
+A estrutura da análise deverá seguir a lógica já utilizada na planilha de referência, que possui campos como preço médio de mercado, FOB convertido, impostos de importação, nacionalização, frete, custo final, resultado bruto, impostos sobre venda, custo operacional, resultado líquido, margem líquida e classificação.
+
+---
+
+# 11. Preço no Brasil
+
+O preço brasileiro será informado manualmente.
+
+Exemplo:
+
+```text
+Preço encontrado na China
+US$ 12,50
+
+        ↓
+
+Usuário informa
+
+Preço praticado no Brasil
+R$ 249,90
+
+        ↓
+
+Sistema calcula
+
+Custo estimado
+Resultado
+Margem
+Classificação
+```
+
+O sistema não deverá obrigar o usuário a buscar automaticamente o preço brasileiro.
+
+O usuário terá controle sobre qual preço de mercado deseja considerar.
+
+---
+
+# 12. Análise individual
+
+O usuário poderá abrir um produto e analisar somente aquele produto.
+
+Fluxo:
+
+```text
+Produtos
+   ↓
+Selecionar produto
+   ↓
+Prontuário
+   ↓
+Informar preço Brasil
+   ↓
+Analisar
+   ↓
+Resultado
+```
+
+A análise deverá apresentar de maneira clara se o produto possui potencial ou não.
+
+---
+
+# 13. Análise em lote
+
+Além da análise individual, o usuário poderá selecionar vários produtos.
+
+Exemplo:
+
+```text
+☑ Produto A
+☑ Produto B
+☑ Produto C
+☐ Produto D
+☑ Produto E
+
+        ↓
+
+[ ANALISAR SELECIONADOS ]
+
+        ↓
+
+Todos os produtos selecionados
+são analisados com os parâmetros
+vigentes.
+```
+
+Isso será importante quando o usuário voltar da feira com dezenas ou centenas de produtos.
+
+---
+
+# 14. Seleção múltipla
+
+A seleção deverá ser simples.
+
+No catálogo:
+
+```text
+┌─────────────────────────────────────────────┐
+│ [☑] Produto A                               │
+│     R$ 80,00                                │
+├─────────────────────────────────────────────┤
+│ [☑] Produto B                               │
+│     R$ 120,00                               │
+├─────────────────────────────────────────────┤
+│ [ ] Produto C                               │
+│     R$ 55,00                                │
+└─────────────────────────────────────────────┘
+
+2 produtos selecionados
+
+[ Analisar selecionados ]
+```
+
+O usuário também poderá optar por analisar apenas um produto.
+
+---
+
+# 15. Resultado da análise
+
+O resultado deverá ser visual e fácil de interpretar.
+
+O sistema deverá apresentar:
+
+* preço de mercado;
+* custo convertido;
+* impostos;
+* nacionalização;
+* frete e outros;
+* custo final;
+* resultado bruto;
+* impostos sobre venda;
+* custo operacional;
+* resultado líquido;
+* margem líquida;
+* classificação.
+
+---
+
+# 16. Classificação
+
+A classificação deverá seguir as faixas utilizadas atualmente na referência.
+
+| Margem líquida | Classificação | Interpretação                       |
+| -------------- | ------------- | ----------------------------------- |
+| Até 10%        | RUIM          | Não compensa nas premissas atuais   |
+| >10% e <15%    | FRACO         | Margem apertada; renegociar custo   |
+| 15% a <20%     | MÉDIO         | Avaliar giro, garantia e risco      |
+| 20% a <25%     | BOM           | Operação atrativa                   |
+| 25% ou mais    | EXCELENTE     | Prioridade para validação comercial |
+
+Essas faixas já fazem parte da lógica atual de análise da planilha de referência.
+
+---
+
+# 17. Tela de resultado
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ ← Produto                                                    │
+│                                                              │
+│ FECHADURA ELETROMAGNÉTICA 280 KG                             │
+│                                                              │
+│              RESULTADO DA ANÁLISE                            │
+│                                                              │
+│                 27,4%                                        │
+│              MARGEM LÍQUIDA                                  │
+│                                                              │
+│                 EXCELENTE                                    │
+│       Prioridade para validação comercial                    │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│ PREÇO NO BRASIL                         R$ 249,90             │
+│ CUSTO FINAL                             R$ 110,00             │
+│ RESULTADO BRUTO                         R$ 139,90             │
+│ IMPOSTOS SOBRE VENDA                    R$ 19,99              │
+│ CUSTO OPERACIONAL                      R$ 12,50              │
+│ RESULTADO LÍQUIDO                      R$ 107,41             │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│ [ Ver composição do custo ]    [ Alterar parâmetros ]        │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 18. Composição do custo
+
+O usuário poderá abrir os detalhes para entender como o resultado foi formado.
+
+```text
+┌─────────────────────────────────────────────┐
+│ COMPOSIÇÃO DO CUSTO                         │
+├─────────────────────────────────────────────┤
+│ Preço na feira              US$ 12,50       │
+│ Conversão                   R$ 00,00        │
+│ Impostos importação         R$ 00,00        │
+│ Nacionalização              R$ 00,00        │
+│ Frete + outros              R$ 00,00        │
+│                                             │
+│ ─────────────────────────────────────────   │
+│ CUSTO FINAL                 R$ 00,00        │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+# 19. Parâmetros de análise
+
+O sistema deverá possuir uma área onde os parâmetros utilizados nas análises possam ser visualizados e ajustados.
+
+A configuração padrão já deverá vir preenchida.
+
+Exemplo:
+
+```text
+┌──────────────────────────────────────────────┐
+│ PARÂMETROS DE ANÁLISE                        │
+├──────────────────────────────────────────────┤
+│ Câmbio                                       │
+│ R$ ______                                    │
+│                                              │
+│ Impostos de importação                       │
+│ ______ %                                     │
+│                                              │
+│ Nacionalização                               │
+│ ______ % / R$                                │
+│                                              │
+│ Frete + outros                               │
+│ ______ % / R$                                │
+│                                              │
+│ Impostos sobre venda                          │
+│ 8,0%                                         │
+│                                              │
+│ Custo operacional                             │
+│ 5,0%                                         │
+│                                              │
+│ [ Salvar parâmetros ]                        │
+└──────────────────────────────────────────────┘
+```
+
+Os valores exibidos acima para impostos sobre venda e custo operacional representam os parâmetros presentes na planilha de referência.
+
+---
+
+# 20. Dashboard / visão geral
+
+A página inicial deverá permitir entender rapidamente o que foi coletado.
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ FEIRA INTERNACIONAL                                          │
+│                                                              │
+│  Produtos       Pendentes       Analisados       Excelentes   │
+│     128             34              94              21       │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│ 🔎 Buscar produto                                            │
+│                                                              │
+│ [Todos] [Pendentes] [Analisados] [Bons] [Excelentes]         │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│ PRINCIPAIS OPORTUNIDADES                                     │
+│                                                              │
+│ 1. Produto A                         32,4%                    │
+│ 2. Produto B                         29,8%                    │
+│ 3. Produto C                         27,5%                    │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
+│ [ + Cadastrar produto ]                                      │
+└──────────────────────────────────────────────────────────────┘
+```
+
+A função principal do dashboard não é apresentar excesso de indicadores, mas facilitar a tomada de decisão.
+
+---
+
+# 21. Cadastro rápido — wireframe
+
+Essa deverá ser uma das telas mais simples do sistema.
+
+```text
+┌──────────────────────────────────────────────┐
+│ ← Produtos                     NOVO PRODUTO  │
+├──────────────────────────────────────────────┤
+│                                              │
+│              ┌──────────────┐                │
+│              │              │                │
+│              │   CÂMERA     │                │
+│              │      +       │                │
+│              │              │                │
+│              └──────────────┘                │
+│                                              │
+│       Tirar foto do produto                  │
+│                                              │
+│ ou                                           │
+│                                              │
+│ [ Continuar sem foto ]                       │
+│                                              │
+├──────────────────────────────────────────────┤
+│ Nome do produto                              │
+│ [____________________________]               │
+│                                              │
+│ Preço na feira                               │
+│ [____________________________]               │
+│                                              │
+│ Stand                                        │
+│ [____________________________]               │
+│                                              │
+│ Segmento                                     │
+│ [ Selecionar segmento ▼ ]                    │
+│                                              │
+│ [ Próximo ]                                  │
+└──────────────────────────────────────────────┘
+```
+
+---
+
+# 22. Cadastro do fornecedor — wireframe
+
+```text
+┌──────────────────────────────────────────────┐
+│ ← Produto                    FORNECEDOR      │
+├──────────────────────────────────────────────┤
+│                                              │
+│ Número do fornecedor                         │
+│ [____________________________]               │
+│                                              │
+│ Nome                                         │
+│ [____________________________]               │
+│                                              │
+│ Telefone                                     │
+│ [____________________________]               │
+│                                              │
+│ Observações                                  │
+│ ┌──────────────────────────────────────────┐ │
+│ │                                          │ │
+│ │                                          │ │
+│ └──────────────────────────────────────────┘ │
+│                                              │
+│ [ Voltar ]                    [ Salvar ]     │
+└──────────────────────────────────────────────┘
+```
+
+---
+
+# 23. Adicionar imagens posteriormente
+
+Caso o usuário tenha cadastrado um produto sem foto, o prontuário deverá apresentar uma opção clara:
+
+```text
+┌─────────────────────────────┐
+│                             │
+│       SEM IMAGEM             │
+│                             │
+│      [ + Adicionar foto ]   │
+│                             │
+└─────────────────────────────┘
+```
+
+O usuário poderá posteriormente adicionar uma ou várias imagens.
+
+---
+
+# 24. Fluxo principal do aplicativo
+
+```text
+                         INÍCIO
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │   DASHBOARD │
+                    └──────┬──────┘
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+             ▼                           ▼
+      CADASTRAR PRODUTO            VER PRODUTOS
+             │                           │
+             ▼                           ▼
+          FOTO?                    LISTA/CATÁLOGO
+        /       \                       │
+      SIM       NÃO                     ▼
+       │          │                SELECIONAR
+       └────┬─────┘                     │
+            ▼                     ┌─────┴─────┐
+       DADOS PRODUTO              │           │
+            │                   UM PRODUTO   VÁRIOS
+            ▼                     │           │
+       FORNECEDOR                 ▼           ▼
+            │                PRONTUÁRIO   SELEÇÃO
+            ▼                     │           │
+          SALVAR                  ▼           ▼
+            │                 ANÁLISE      ANÁLISE
+            ▼                     │           │
+         PRODUTO                  └─────┬─────┘
+                                        ▼
+                                  RESULTADO
+                                        │
+                                        ▼
+                              CLASSIFICAÇÃO
+                                        │
+                              ┌─────────┼─────────┐
+                              ▼         ▼         ▼
+                             RUIM      BOM    EXCELENTE
+```
+
+---
+
+# 25. App Flow completo
+
+## Fluxo 01 — Entrada
+
+Dashboard
+→ visualizar quantidade de produtos
+→ visualizar pendências
+→ visualizar oportunidades
+→ cadastrar produto
+→ acessar catálogo.
+
+## Fluxo 02 — Cadastro
+
+Dashboard
+→ Novo produto
+→ Fotografar ou continuar sem foto
+→ Nome
+→ Preço
+→ Stand
+→ Segmento
+→ Fornecedor
+→ Salvar
+→ Produto cadastrado.
+
+## Fluxo 03 — Produto sem foto
+
+Novo produto
+→ Continuar sem foto
+→ preencher informações
+→ salvar
+→ produto aparece no catálogo
+→ abrir prontuário
+→ adicionar foto posteriormente.
+
+## Fluxo 04 — Visualização
+
+Dashboard
+→ Produtos
+→ pesquisar/filtrar
+→ selecionar produto
+→ abrir prontuário
+→ visualizar informações completas.
+
+## Fluxo 05 — Análise individual
+
+Prontuário
+→ informar preço Brasil
+→ analisar
+→ sistema utiliza parâmetros calibrados
+→ resultado
+→ margem líquida
+→ classificação
+→ composição do custo.
+
+## Fluxo 06 — Análise em lote
+
+Produtos
+→ selecionar vários
+→ analisar selecionados
+→ sistema aplica os parâmetros
+→ produtos são analisados
+→ usuário visualiza resultados
+→ pode abrir qualquer produto individualmente.
+
+## Fluxo 07 — Revisão da oportunidade
+
+Resultado
+→ visualizar margem
+→ visualizar classificação
+→ visualizar composição
+→ revisar parâmetros
+→ retornar ao produto.
+
+---
+
+# 26. Experiência durante a feira
+
+O sistema deverá priorizar velocidade.
+
+O usuário não deverá ser obrigado a preencher todos os campos para conseguir registrar um produto.
+
+A lógica será:
+
+> Encontrou → fotografou → registrou informações essenciais → salvou → continuou a feira.
+
+Informações complementares poderão ser adicionadas posteriormente.
+
+Isso evita que o usuário perca tempo durante a visita aos stands.
+
+---
+
+# 27. Experiência depois da feira
+
+Depois da coleta, o sistema passa a funcionar como uma central de análise.
+
+O usuário poderá:
+
+1. visualizar todos os produtos;
+2. completar informações que ficaram pendentes;
+3. adicionar fotos;
+4. informar preços praticados no Brasil;
+5. analisar individualmente;
+6. analisar vários produtos;
+7. comparar resultados;
+8. identificar produtos com maior potencial.
+
+---
+
+# 28. Comparação de produtos
+
+A seleção de vários produtos deverá permitir posteriormente uma visão comparativa.
+
+Exemplo:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ COMPARAÇÃO                                                  │
+├───────────────┬───────────┬───────────┬───────────┬─────────┤
+│ Produto       │ Custo     │ Brasil    │ Margem    │ Status  │
+├───────────────┼───────────┼───────────┼───────────┼─────────┤
+│ Produto A     │ R$ 80     │ R$ 199    │ 31%       │ EXCEL.  │
+│ Produto B     │ R$ 90     │ R$ 180    │ 18%       │ MÉDIO   │
+│ Produto C     │ R$ 50     │ R$ 120    │ 24%       │ BOM     │
+└───────────────┴───────────┴───────────┴───────────┴─────────┘
+```
+
+A finalidade é permitir que o usuário identifique rapidamente quais produtos merecem maior atenção.
+
+---
+
+# 29. Regras principais do negócio
+
+### Regra 1
+
+Todo produto deverá possuir um cadastro próprio.
+
+### Regra 2
+
+Um produto poderá possuir várias imagens.
+
+### Regra 3
+
+Um produto poderá ser cadastrado sem imagem.
+
+### Regra 4
+
+A imagem poderá ser adicionada posteriormente.
+
+### Regra 5
+
+O preço brasileiro será informado manualmente.
+
+### Regra 6
+
+Os parâmetros de análise já deverão existir previamente no sistema.
+
+### Regra 7
+
+O usuário poderá alterar os parâmetros quando necessário.
+
+### Regra 8
+
+O usuário poderá analisar um único produto.
+
+### Regra 9
+
+O usuário poderá analisar vários produtos simultaneamente.
+
+### Regra 10
+
+A análise deverá apresentar uma classificação baseada na margem líquida.
+
+### Regra 11
+
+Cada produto deverá possuir um prontuário completo.
+
+### Regra 12
+
+O usuário deverá conseguir acessar o prontuário diretamente a partir do catálogo.
+
+---
+
+# 30. Estrutura resumida das telas
+
+O aplicativo deverá possuir, inicialmente:
+
+1. Dashboard
+2. Cadastro rápido de produto
+3. Cadastro de fornecedor
+4. Catálogo de produtos
+5. Prontuário do produto
+6. Galeria de imagens
+7. Análise individual
+8. Seleção de produtos
+9. Análise em lote
+10. Resultado da análise
+11. Composição do custo
+12. Parâmetros de análise
+13. Comparação de produtos
+
+---
+
+# 31. Visão final da experiência
+
+O sistema deverá transformar o processo inteiro em:
+
+```text
+                    FEIRA
+                      │
+                      ▼
+              ┌───────────────┐
+              │ CADASTRO RÁPIDO│
+              └───────┬───────┘
+                      │
+                      ▼
+              ┌───────────────┐
+              │   PRODUTOS    │
+              │    COLETADOS  │
+              └───────┬───────┘
+                      │
+                      ▼
+              ┌───────────────┐
+              │  PRONTUÁRIO   │
+              │   COMPLETO    │
+              └───────┬───────┘
+                      │
+             ┌────────┴────────┐
+             ▼                 ▼
+        UM PRODUTO         VÁRIOS
+             │                 │
+             └────────┬────────┘
+                      ▼
+              ┌───────────────┐
+              │    ANÁLISE    │
+              └───────┬───────┘
+                      │
+                      ▼
+              ┌───────────────┐
+              │   RESULTADO   │
+              │               │
+              │ Custo         │
+              │ Lucro         │
+              │ Margem        │
+              │ Classificação │
+              └───────┬───────┘
+                      │
+                      ▼
+             DECISÃO DE COMPRA
+```
+
+# 32. Resultado esperado
+
+Ao final, o usuário terá uma base organizada de todos os produtos encontrados na feira, com informações comerciais, fotografias, fornecedores e análise de viabilidade.
+
+O sistema deverá facilitar principalmente três decisões:
+
+**O que encontrei?**
+
+Prontuário completo do produto.
+
+**Quanto realmente custa trazer e vender?**
+
+Composição do custo e análise.
+
+**Quais produtos merecem atenção?**
+
+Margem e classificação de cada produto.
+
+A proposta central é fazer com que a coleta seja extremamente rápida na feira e que a análise posterior seja organizada, padronizada e fácil de interpretar.
