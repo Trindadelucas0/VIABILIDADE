@@ -45,7 +45,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <ToastProvider>
       <div className="shell">
         <aside className="sidebar">
-          <p className="px-3 text-lg font-semibold">Viabilidade</p>
+          <p className="border-b border-line px-3 pb-4 text-lg font-semibold">Viabilidade</p>
           <nav className="grid gap-1" aria-label="Principal">
             {NAV.map((item) => (
               <Link key={item.href} href={item.href} aria-current={item.match(pathname) ? "page" : undefined}>
@@ -68,20 +68,34 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
         </aside>
         <div>
-          <header className="flex items-center justify-between gap-3 px-4 pt-4 md:px-10 md:pt-8">
-            <p className="text-sm text-muted">{user ? `Olá, ${user.display_name}` : "Viabilidade"}</p>
+          <header className="flex items-center justify-between gap-3 border-b border-line px-4 pb-4 pt-[calc(16px+env(safe-area-inset-top))] md:px-10 md:pb-6 md:pt-8">
+            <p className="text-sm">
+              {user ? (
+                <>
+                  <span className="text-muted">Olá,</span> <span className="font-medium text-ink">{user.display_name}</span>
+                </>
+              ) : (
+                <span className="text-muted">Viabilidade</span>
+              )}
+            </p>
             <div className="flex items-center gap-2">
               {user?.role === "ADMIN" ? (
                 <>
-                  <Link className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-ink no-underline lg:hidden" href="/usuarios">
+                  <Link
+                    className="inline-flex min-h-11 items-center px-2 text-sm font-normal text-muted no-underline min-[960px]:hidden hover:text-ink"
+                    href="/usuarios"
+                  >
                     Usuários
                   </Link>
-                  <Link className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-ink no-underline lg:hidden" href="/parametros">
+                  <Link
+                    className="inline-flex min-h-11 items-center px-2 text-sm font-normal text-muted no-underline min-[960px]:hidden hover:text-ink"
+                    href="/parametros"
+                  >
                     Parâmetros
                   </Link>
                 </>
               ) : null}
-              <Button variant="ghost" onClick={() => void logout()}>
+              <Button variant="secondary" onClick={() => void logout()}>
                 Sair
               </Button>
             </div>

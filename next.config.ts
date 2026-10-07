@@ -30,7 +30,7 @@ function securityHeaders() {
         "connect-src 'self'",
         "worker-src 'self'",
         "manifest-src 'self'",
-        "media-src 'self' blob:",
+        "media-src 'self' blob: mediastream:",
         "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'",

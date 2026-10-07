@@ -66,7 +66,7 @@
 
   .content {
     min-width: 0;
-    padding: 16px 16px calc(80px + env(safe-area-inset-bottom));
+    padding: 16px 16px calc(112px + env(safe-area-inset-bottom));
   }
 
   .tabbar {
@@ -77,23 +77,29 @@
     z-index: 20;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    gap: 8px;
+    padding: 12px 12px calc(20px + env(safe-area-inset-bottom));
     background: var(--color-surface);
     border-top: 1px solid var(--color-line);
   }
 
+  .tabbar svg {
+    width: 32px;
+    height: 32px;
+  }
+
   .tabbar a {
     display: flex;
-    min-height: 44px;
+    min-height: 56px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 4px;
     color: var(--color-muted);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     text-decoration: none;
+    touch-action: manipulation;
   }
 
   .tabbar a[aria-current="page"] {
@@ -170,6 +176,13 @@
     line-height: 1.35;
   }
 
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+
   .section-card {
     display: grid;
     gap: 16px;
@@ -181,7 +194,7 @@
 
   .sticky-action-bar {
     position: sticky;
-    bottom: calc(96px + env(safe-area-inset-bottom));
+    bottom: calc(120px + env(safe-area-inset-bottom));
     z-index: 10;
     display: flex;
     flex-wrap: wrap;
@@ -203,7 +216,7 @@
   .toast {
     position: fixed;
     right: 16px;
-    bottom: calc(88px + env(safe-area-inset-bottom));
+    bottom: calc(112px + env(safe-area-inset-bottom));
     left: 16px;
     z-index: 40;
     border: 1px solid var(--color-line);
@@ -243,6 +256,10 @@
     color: var(--color-ink);
     font-weight: 600;
     text-decoration: none;
+  }
+
+  .sidebar a:not([aria-current="page"]):hover {
+    background: var(--color-bg);
   }
 
   .sidebar a[aria-current="page"] {

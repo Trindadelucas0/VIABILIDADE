@@ -6,6 +6,13 @@ import { productWriteSchema } from "../../../server/schemas";
 
 export const dynamic = "force-dynamic";
 
+function parseCatalogPage(raw: string | null): number {
+  if (!raw) return 1;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return 1;
+  return parsed;
+}
+
 export async function GET(request: Request) {
   return handle(async () => {
     const actor = await requireActor(request);
@@ -15,6 +22,7 @@ export async function GET(request: Request) {
       status: url.searchParams.get("status") ?? undefined,
       classificacao: url.searchParams.get("classificacao") ?? undefined,
       visibility: resolveVisibility(actor, url.searchParams.get("scope")),
+      page: parseCatalogPage(url.searchParams.get("page")),
     });
     return json(catalog);
   });

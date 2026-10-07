@@ -55,6 +55,7 @@ export default function NewProductPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
+  const [cameraBlocked, setCameraBlocked] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [name, setName] = useState("");
   const [fairPrice, setFairPrice] = useState("");
@@ -98,31 +99,85 @@ export default function NewProductPage() {
   }, []);
 
   useEffect(() => {
-    if (videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-    }
+    const video = videoRef.current;
+    if (!video || !streamRef.current) return;
+    video.srcObject = streamRef.current;
+    void video.play().catch(() => undefined);
   }, [step, cameraOn]);
 
-  function goBack() {
+  useEffect(() => {
     if (step === "foto") return;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setCameraOn(false);
+  }, [step]);
+
+  function stopCamera() {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setCameraOn(false);
+  }
+
+  function goBack() {
+    if (step === "foto") {
+      stopCamera();
+      return;
+    }
     setStep(STEPS[stepIndex - 1]!);
   }
 
   function goNext() {
     if (step === "fornecedor") return;
+    if (step === "foto") stopCamera();
     setStep(STEPS[stepIndex + 1]!);
+  }
+
+  function cameraErrorName(error: unknown) {
+    if (error instanceof DOMException) return error.name;
+    if (error && typeof error === "object" && "name" in error && typeof error.name === "string") return error.name;
+    return "";
   }
 
   async function startCamera() {
     setCameraError("");
+    setCameraBlocked(false);
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      setCameraOn(false);
+      setCameraError("Abra o Viabilidade pelo ícone instalado em https. A câmera do celular não abre em página sem cadeado.");
+      return;
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+      } catch (error) {
+        if (cameraErrorName(error) === "OverconstrainedError") {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } else {
+          throw error;
+        }
+      }
       streamRef.current = stream;
       setCameraOn(true);
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch {
-      setCameraOn(false);
-      setCameraError("A câmera não foi autorizada. Você pode continuar sem foto.");
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        void video.play().catch(() => undefined);
+      }
+    } catch (error) {
+      stopCamera();
+      const name = cameraErrorName(error);
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        setCameraBlocked(true);
+        setCameraError(
+          "A câmera está bloqueada. Android: segure o ícone do Viabilidade → Informações do app → Permissões → Câmera → Permitir. iPhone: Ajustes → Viabilidade → Câmera → Permitir.",
+        );
+        return;
+      }
+      setCameraError("Não foi possível abrir a câmera. Você pode escolher um arquivo ou pular.");
     }
   }
 
@@ -154,15 +209,15 @@ export default function NewProductPage() {
     setPhoto(file);
     setPreview(URL.createObjectURL(file));
     setCameraError("");
+    setCameraBlocked(false);
+    stopCamera();
   }
 
   function skipPhoto() {
     if (preview) URL.revokeObjectURL(preview);
     setPreview(null);
     setPhoto(null);
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-    streamRef.current = null;
-    setCameraOn(false);
+    stopCamera();
     setStep("nome");
   }
 
@@ -257,7 +312,7 @@ export default function NewProductPage() {
   return (
     <div className="mx-auto grid max-w-xl gap-5">
       {step === "foto" ? (
-        <Link href="/produtos" className="inline-flex min-h-11 items-center gap-2 font-semibold no-underline">
+        <Link href="/produtos" className="inline-flex min-h-11 items-center gap-2 font-semibold no-underline" onClick={() => stopCamera()}>
           <IconBack />
           Produtos
         </Link>
@@ -296,13 +351,25 @@ export default function NewProductPage() {
             ) : cameraOn ? (
               <video ref={videoRef} autoPlay playsInline muted className="max-h-72 w-full object-contain" />
             ) : (
-              <p className="px-4 text-center text-muted">Área da câmera</p>
+              <p className="px-4 text-center text-muted">O celular vai pedir a câmera. Toque em Permitir.</p>
             )}
           </div>
           {cameraError ? <p className="text-sm text-danger">{cameraError}</p> : null}
           <div className="flex flex-wrap gap-3">
             <Button onClick={() => void startCamera()}>Tirar foto</Button>
             {cameraOn ? <Button variant="secondary" onClick={capture}>Usar esta foto</Button> : null}
+            {cameraBlocked ? (
+              <label className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-line bg-surface px-4 font-semibold">
+                Abrir a câmera do celular
+                <input
+                  className="sr-only"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(event) => chooseFile(event.target.files?.[0] ?? null)}
+                />
+              </label>
+            ) : null}
             <label className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-line bg-surface px-4 font-semibold">
               Escolher arquivo
               <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => chooseFile(event.target.files?.[0] ?? null)} />

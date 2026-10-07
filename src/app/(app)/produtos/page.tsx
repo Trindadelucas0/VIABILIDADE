@@ -55,6 +55,10 @@ function CatalogPage() {
     };
   }, [query]);
 
+  useEffect(() => {
+    setSelected([]);
+  }, [query]);
+
   function replaceQuery(next: URLSearchParams) {
     const text = next.toString();
     router.replace(text ? `/produtos?${text}` : "/produtos");
@@ -62,12 +66,25 @@ function CatalogPage() {
 
   function setFilter(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
+    if (key !== "page") next.delete("page");
     if (value) next.set(key, value);
     else next.delete(key);
     replaceQuery(next);
   }
 
+  function setPage(nextPage: number) {
+    const next = new URLSearchParams(params.toString());
+    if (nextPage <= 1) next.delete("page");
+    else next.set("page", String(nextPage));
+    replaceQuery(next);
+  }
+
+  function clearCatalogFilters() {
+    router.replace(user?.role === "ADMIN" && params.get("scope") === "mine" ? "/produtos?scope=mine" : "/produtos");
+  }
+
   const filtering = Boolean(params.get("q") || params.get("status") || params.get("classificacao"));
+  const totalPages = catalog ? Math.max(1, Math.ceil(catalog.total / catalog.page_size)) : 1;
 
   async function analyzeSelected() {
     setBusy(true);
@@ -136,12 +153,12 @@ function CatalogPage() {
       </form>
       {loading ? <Skeleton className="h-40" /> : null}
       {error ? <ErrorState message={error} onRetry={() => router.refresh()} /> : null}
-      {catalog && !loading && catalog.products.length === 0 ? (
+      {catalog && !loading && catalog.total === 0 ? (
         filtering ? (
           <EmptyState
             title="Nenhum produto com esse filtro"
             action={
-              <Button variant="secondary" onClick={() => router.replace(user?.role === "ADMIN" && params.get("scope") === "mine" ? "/produtos?scope=mine" : "/produtos")}>
+              <Button variant="secondary" onClick={clearCatalogFilters}>
                 Limpar
               </Button>
             }
@@ -149,6 +166,16 @@ function CatalogPage() {
         ) : (
           <EmptyState title="Nenhum produto ainda" action={<Link href="/produtos/novo">Cadastrar produto</Link>} />
         )
+      ) : null}
+      {catalog && !loading && catalog.total > 0 && catalog.products.length === 0 ? (
+        <EmptyState
+          title="Nenhum produto nesta página"
+          action={
+            <Button variant="secondary" onClick={() => setPage(1)}>
+              Primeira página
+            </Button>
+          }
+        />
       ) : null}
       <ul className="grid gap-3">
         {catalog?.products.map((product) => {
@@ -185,6 +212,21 @@ function CatalogPage() {
           );
         })}
       </ul>
+      {catalog && !loading && catalog.total > catalog.page_size ? (
+        <nav className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3" aria-label="Páginas do catálogo">
+          <p className="text-sm font-semibold text-muted">
+            Página {catalog.page} de {totalPages} · {catalog.total} produto{catalog.total === 1 ? "" : "s"}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" disabled={catalog.page <= 1} onClick={() => setPage(catalog.page - 1)}>
+              Anterior
+            </Button>
+            <Button variant="secondary" disabled={catalog.page >= totalPages} onClick={() => setPage(catalog.page + 1)}>
+              Próxima
+            </Button>
+          </div>
+        </nav>
+      ) : null}
       {selected.length > 0 ? (
         <div className="sticky bottom-24 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface p-3 md:bottom-4">
           <p className="font-semibold">

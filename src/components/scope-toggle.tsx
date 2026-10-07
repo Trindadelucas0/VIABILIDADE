@@ -12,6 +12,7 @@ export function ScopeToggle() {
     const query = new URLSearchParams(params.toString());
     if (next === "all") query.delete("scope");
     else query.set("scope", "mine");
+    query.delete("page");
     const suffix = query.toString();
     router.replace(suffix ? `${pathname}?${suffix}` : pathname);
   }

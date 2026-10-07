@@ -13,13 +13,35 @@ import type { Supplier } from "@prisma/client";
 import { serializeAnalysis } from "../analysis/serialize";
 import { currentParameters, rateOrNull } from "../parameters/service";
 
+export const CATALOG_PAGE_SIZE = 20;
+
 const detailInclude = {
   supplier: true,
   images: { orderBy: { sortOrder: "asc" as const } },
   analyses: { orderBy: { sequence: "desc" as const }, include: { snapshot: true } },
 } satisfies Prisma.ProductInclude;
 
+const listInclude = {
+  supplier: true,
+  images: { orderBy: { sortOrder: "asc" as const }, take: 1, select: { id: true } },
+  analyses: {
+    orderBy: { sequence: "desc" as const },
+    take: 1,
+    select: {
+      id: true,
+      sequence: true,
+      netMargin: true,
+      classification: true,
+      parameterVersion: true,
+      finalCostBrl: true,
+      netResultBrl: true,
+      marketPriceBrl: true,
+    },
+  },
+} satisfies Prisma.ProductInclude;
+
 type Detail = Prisma.ProductGetPayload<{ include: typeof detailInclude }>;
+type ListRow = Prisma.ProductGetPayload<{ include: typeof listInclude }>;
 
 function moneyOut(value: { toString(): string } | null): string | null {
   if (value == null) return null;
@@ -98,6 +120,38 @@ export function serializeProductCard(product: Detail, parameters: Awaited<Return
     missing: full.missing,
     latest_analysis: full.latest_analysis,
     created_by: full.created_by,
+  };
+}
+
+function serializeProductCardFromList(product: ListRow, parameters: Awaited<ReturnType<typeof currentParameters>>) {
+  const check = canAnalyze(completenessOf(product, parameters));
+  const latest = product.analyses[0] ?? null;
+  return {
+    id: product.id,
+    name: product.name,
+    segment: product.segment,
+    stand: product.stand,
+    status: product.status,
+    currency: product.currency,
+    fair_price_usd: moneyOut(product.fairPriceUsd),
+    brazil_price_brl: moneyOut(product.brazilPriceBrl),
+    supplier_name: product.supplier?.name ?? null,
+    cover_image_id: product.images[0]?.id ?? null,
+    can_analyze: check.ok && product.status !== "ARCHIVED",
+    missing: product.status === "ARCHIVED" ? [] : check.missing,
+    latest_analysis: latest
+      ? {
+          id: latest.id,
+          sequence: latest.sequence,
+          margin: new Decimal(latest.netMargin.toString()).toDecimalPlaces(6).toFixed(6),
+          classification: latest.classification,
+          parameter_version: latest.parameterVersion,
+          final_cost_brl: moneyOut(latest.finalCostBrl),
+          net_result_brl: moneyOut(latest.netResultBrl),
+          market_price_brl: moneyOut(latest.marketPriceBrl),
+        }
+      : null,
+    created_by: product.createdBy,
   };
 }
 
@@ -298,8 +352,10 @@ const CLASSES = new Set(["RUIM", "FRACO", "MEDIO", "BOM", "EXCELENTE"]);
 
 export async function listProducts(
   actor: Actor,
-  query: { q?: string; status?: string; classificacao?: string; visibility: Visibility },
+  query: { q?: string; status?: string; classificacao?: string; visibility: Visibility; page?: number },
 ) {
+  const page = query.page ?? 1;
+  const pageSize = CATALOG_PAGE_SIZE;
   return withActor(actor, async (tx) => {
     const where: Prisma.ProductWhereInput = { ...productWhere(actor, query.visibility) };
     if (query.status && STATUSES.has(query.status)) {
@@ -321,12 +377,14 @@ export async function listProducts(
       const ids = await latestIdsByClassification(tx, actor, query.visibility, query.classificacao);
       where.id = { in: ids };
     }
-    const [products, parameters] = await Promise.all([
+    const [total, products, parameters] = await Promise.all([
+      tx.product.count({ where }),
       tx.product.findMany({
         where,
-        include: detailInclude,
+        include: listInclude,
         orderBy: { updatedAt: "desc" },
-        take: 200,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
       }),
       currentParameters(tx),
     ]);
@@ -337,8 +395,11 @@ export async function listProducts(
       take: 50,
     });
     return {
-      products: products.map((product) => serializeProductCard(product, parameters)),
+      products: products.map((product) => serializeProductCardFromList(product, parameters)),
       segments: segments.map((row) => row.segment).filter((segment): segment is string => Boolean(segment)),
+      page,
+      page_size: pageSize,
+      total,
     };
   });
 }

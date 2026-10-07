@@ -2,8 +2,8 @@
 
 | Item | Valor |
 |------|--------|
-| Versão do sistema | 1.0.0 — Viabilidade |
-| Última atualização | 07/10/2026 (preço na digitação mostra R$ ou US$ e 270 vira 270,00) |
+| Versão do sistema | 1.0.2 — Viabilidade |
+| Última atualização | 07/10/2026 (barra do celular com ícones 32px e câmera com pedido de permissão; `/comparar` em páginas de 20) |
 | Fonte oficial | Este arquivo |
 | Anexos | [prd-flow](prd-flow), [trd](trd), [implementacao](implementacao) |
 
@@ -24,15 +24,17 @@ Não há cadastro público nem tela de convite. O administrador inicial vem de `
 | Domínio | `src/domain` | Margem, classificação, `canAnalyze`, status. Não importa React nem `next/server`. |
 | Banco | PostgreSQL, Prisma 7, adapter `pg` | Dinheiro em `DECIMAL`. RLS nas tabelas de negócio. |
 | Arquivos | Disco `storage/products/` | Fotos fora de `public/`. |
-| PWA | Serwist | Precache do shell. `/api` sem cache. |
+| PWA | Serwist | Precache do shell. `/api` sem cache. Ícones em `public/icons/` (192, 512, maskable), `public/apple-touch-icon.png` e `public/favicon.ico`; `theme_color` `#0b3a82`, `background_color` `#f3f5f8` em `src/app/manifest.ts`. Manifest `id`: `/viabilidade`. No celular, `viewport-fit: cover`; a barra inferior usa ícones de 32px, alvo de 56px e fica acima da área segura. |
 
 ### 2.1 Histórico de versões
 
 | Versão | Nome | O que entrou |
 |--------|------|----------------|
-| 1.0.0 | Viabilidade | Login por seed, catálogo com escopo, análise com snapshot, lote, comparação, dashboard, parâmetros, PWA online-first. Correção: o id na URL do produto, da foto e do fornecedor aceita UUID v4 (o quarto grupo tem 4 caracteres). Preço na feira e preço Brasil formatam na digitação (US$ / R$, 270 = 270,00). |
+| 1.0.2 | Viabilidade | `/comparar` sem `ids` na URL lista produtos com status analisado (`GET /api/products?status=ANALYZED&page=`), compara a página visível com `POST /api/analyses/compare` e pagina 20 por `?page=`. Vazio: "Nenhum produto analisado" com link para `/produtos`. **Analisar selecionados** em `/produtos` continua abrindo `/comparar?ids=` só com a seleção, sem paginação de catálogo. Barra do celular: ícones 32px, alvo 56px, acima da área segura. Passo Foto pede a câmera no toque, explica o bloqueio no Android e no iPhone e oferece Abrir a câmera do celular. |
+| 1.0.1 | Viabilidade | Catálogo em `/produtos` com 20 cards por página (`?page=`), Anterior/Próxima, total na resposta de `GET /api/products`. A lista não carrega composição de análise (só a última margem/classificação para o card). Marcar para **Analisar selecionados** vale só na página visível; trocar página, filtro, busca ou Todos/Meus limpa a marcação. |
+| 1.0.0 | Viabilidade | Login por seed, catálogo com escopo, análise com snapshot, lote, comparação, dashboard, parâmetros, PWA online-first. Correção: o id na URL do produto, da foto e do fornecedor aceita UUID v4 (o quarto grupo tem 4 caracteres). Preço na feira e preço Brasil formatam na digitação (US$ / R$, 270 = 270,00). Ícone PWA próprio (V em `#0b3a82`), apple-touch, favicon e rotas de ícone liberadas no middleware sem sessão. |
 
-`package.json` está em `1.0.0`.
+`package.json` está em `1.0.2`.
 
 ## 3. Mapa de telas
 
@@ -48,9 +50,10 @@ Não há cadastro público nem tela de convite. O administrador inicial vem de `
 | `/produtos/[id]` | Analisar | `/produtos/[id]/resultado` |
 | `/produtos/[id]/resultado` | Ver composição | `/produtos/[id]/composicao` |
 | `/produtos/[id]/resultado` | Alterar parâmetros (admin) | `/parametros` |
+| `/comparar` | Abrir aba (sem `ids`) | Tabela dos analisados (20 por `?page=`) |
 | `/comparar` | Toque na linha com análise | `/produtos/[id]/resultado` |
 
-Mobile (até 959px): barra inferior Início, Produtos, Novo, Comparar. Desktop: a mesma navegação vira coluna lateral. **Usuários** e **Parâmetros** só aparecem para admin.
+Mobile (até 959px): barra inferior Início, Produtos, Novo, Comparar. No celular os ícones têm 32px, cada item tem alvo de 56px e a barra fica acima da área segura (o rótulo não cola na borda). Desktop: a mesma navegação vira coluna lateral, com ícones de 24px. **Usuários** e **Parâmetros** só para admin: no topo da área principal até 959px; a partir de 960px, só na coluna lateral. **Sair** fica no topo em qualquer largura.
 
 ## 4. Papéis e acesso
 
@@ -171,13 +174,15 @@ No passo Preço, o campo mostra `US$` fixo na frente. Digitar 270 mostra `US$ 27
 
 Depois de salvar, a tela volta ao passo Foto com os campos do produto limpos e o fornecedor mantido. Trilha dos seis passos indica o passo atual. Hints **Entra na análise.** em Nome, Preço na feira e Nome do fornecedor; **Opcional.** em Stand e Segmento. Se houver `viabilidade_last_supplier`, aparece "Mesmo fornecedor da última ficha." Cartão **Salvo** com link **Abrir prontuário**. Câmbio e alíquotas vêm de `/parametros`; quando o admin salva lá, o prontuário atualiza a lista **Falta** sem editar o produto de novo. **Analisar** só no prontuário.
 
-Câmera recusada: a mensagem fica no bloco da foto e **Pular** segue habilitado.
+No passo Foto, **Tirar foto** pede a câmera no mesmo toque: o celular mostra o diálogo Permitir/Bloquear. Antes da imagem abrir, a tela diz "O celular vai pedir a câmera. Toque em Permitir." Sem https (ou sem `getUserMedia`), a mensagem pede para abrir o app instalado em https. Se o aparelho recusar a câmera traseira por restrição, o app tenta de novo com vídeo simples. Se a permissão for negada, a mensagem explica como liberar — Android: segurar o ícone do Viabilidade → Informações do app → Permissões → Câmera → Permitir; iPhone: Ajustes → Viabilidade → Câmera → Permitir — e aparece **Abrir a câmera do celular** (arquivo com captura da câmera). **Escolher arquivo** continua disponível. **Pular** segue para Nome sem foto. Ao sair do passo Foto, a câmera desliga.
 
 ### 6.4 Catálogo
 
-Filtros na query: `q`, `status`, `classificacao`. Busca com botão **Buscar**. Admin também usa `scope=mine` ou o padrão todos. Arquivados ficam de fora até o filtro Arquivados. Toque no card abre o prontuário. O checkbox não abre o card. Com última análise, o card mostra a margem percentual à direita. Analisar selecionados chama `POST /api/analyses/batch` e abre `/comparar` com os ids.
+Filtros na query: `q`, `status`, `classificacao`, `page`. Busca com botão **Buscar**. Admin também usa `scope=mine` ou o padrão todos. Arquivados ficam de fora até o filtro Arquivados. A lista mostra **20 produtos por página** (ordenados por atualização mais recente). Com mais de 20 no filtro atual, aparecem **Anterior** e **Próxima** e o texto "Página N de M · total produtos". `GET /api/products` devolve `page`, `page_size` (20) e `total`; a resposta da lista **não** inclui composição de custo (isso fica em `/produtos/[id]/composicao`). Buscar, mudar Status ou Classificação, ou alternar Todos/Meus remove `page` da URL (volta à página 1).
 
-Vazio de busca: "Nenhum produto com esse filtro" e Limpar. Vazio real: link para Novo.
+Toque no card abre o prontuário. O checkbox não abre o card. Com última análise, o card mostra a margem percentual à direita. **Analisar selecionados** só considera os marcados na página visível; ao mudar de página ou filtro a marcação zera. O lote chama `POST /api/analyses/batch` (máx. 50 ids) e abre `/comparar` com os ids.
+
+Vazio de busca: "Nenhum produto com esse filtro" e Limpar. Vazio real: link para Novo. Página além do fim (`total > 0` e zero cards): "Nenhum produto nesta página" e **Primeira página**.
 
 ### 6.5 Prontuário
 
@@ -193,7 +198,9 @@ A composição usa o mesmo formato de câmbio (`1 USD = R$`) e detalha FOB conve
 
 ### 6.7 Comparação
 
-`POST /api/analyses/compare` lê a última análise. Sem análise: "Sem análise". Id fora do escopo: "Produto não encontrado", sem nome. No celular a tabela vira cards com margem em destaque, classificação, custo final, preço Brasil e resultado líquido. O nome do produto abre `/produtos/[id]` ou `/produtos/[id]/resultado`. O id da URL passa por `src/server/uuid.ts` antes da busca. Um UUID v4 válido que não existe, ou de outro operador, continua 404. "Tentar de novo" repete essa busca.
+Dois modos. **Sem `ids` na URL:** a tela busca o catálogo com `status=ANALYZED` e `page` (20 por página, mesmo escopo de `/produtos`: operador vê só os próprios; admin vê todos). Em seguida chama `POST /api/analyses/compare` com os ids da página. Mostra tabela (desktop) ou cards (celular) com custo final, preço Brasil, resultado líquido e margem. **Anterior** e **Próxima** trocam `?page=` em `/comparar`. Se não houver nenhum analisado: "Nenhum produto analisado" e link **Ir para produtos**. Se `total > 0` mas a página não tiver cards: "Nenhum produto nesta página" e **Primeira página**. **Com `ids` na URL** (vindo de **Analisar selecionados** em `/produtos`): só esses produtos, sem paginação de catálogo; linhas sem análise mostram o motivo gravado em `sessionStorage` (`viabilidade_skipped`) ou "Sem análise".
+
+`POST /api/analyses/compare` lê a última análise gravada; não recalcula nesta tela. Id fora do escopo: "Produto não encontrado". O nome do produto abre `/produtos/[id]` ou `/produtos/[id]/resultado`. Os ids do POST passam por validação UUID em `idListSchema` (1 a 50).
 
 ### 6.8 Parâmetros
 
@@ -266,9 +273,9 @@ Disco em `storage/products/`, nome uuid, no máximo 8 MB e 10 imagens por produt
 2. Suba o Postgres, rode `npx prisma migrate deploy` e `npm run dev`.
 3. Abra `/login` e entre com o e-mail do operador.
 4. Peça ao admin para abrir `/parametros` e salvar câmbio e alíquotas. Sem isso, o produto grava como pendente com "Câmbio nos parâmetros".
-5. Em Novo, percorra o wizard (foto opcional, nome, preço USD, stand, segmento, fornecedor) e toque **Salvar**. No preço, digite 270 e confira `US$ 270,00` ao sair do campo. O fluxo reabre a foto do próximo produto com o mesmo fornecedor.
+5. Em Novo, percorra o wizard (foto opcional, nome, preço USD, stand, segmento, fornecedor) e toque **Salvar**. Na foto, toque **Tirar foto** e **Permitir** quando o celular pedir a câmera; se estiver bloqueada, use **Abrir a câmera do celular** ou **Pular**. No preço, digite 270 e confira `US$ 270,00` ao sair do campo. O fluxo reabre a foto do próximo produto com o mesmo fornecedor.
 6. Depois da feira, abra o prontuário, informe o preço no Brasil e toque **Analisar** quando **Falta** estiver vazio (inclui parâmetros em `/parametros`).
-7. No catálogo, marque produtos e use Analisar selecionados para ir à comparação.
+7. No catálogo, marque produtos **na página atual** e use Analisar selecionados para ir à comparação. Com muitos cadastros, use Anterior/Próxima (`?page=`) para ver as demais páginas.
 8. O admin, em Início, usa Todos para ver a equipe e Meus para ver só o próprio cadastro. O operador não vê esse filtro.
 9. Para o 404: com a sessão do operador, peça `GET /api/products/{id-do-admin-ou-de-outro}`. A resposta é 404. A foto desse id, sem cookie, é 401.
 
@@ -285,6 +292,7 @@ Notificação local: o navegador só é consultado depois do primeiro produto sa
 - [ ] PATCH de parâmetros pelo operador retorna 403; análise antiga guarda a versão anterior.
 - [ ] Foto sem cookie retorna 401; arquivo não está em `public/`.
 - [ ] Offline: o shell pode abrir; a lista mostra "Sem conexão" e não grava cadastro local.
+- [ ] Catálogo com 21+ produtos: mostra 20 cards, Próxima abre `?page=2`; marcar e trocar de página limpa a seleção.
 - [ ] No passo Preço e no prontuário, digitar 270 mostra US$ ou R$ na frente e 270,00 ao sair. Letras não entram. `/parametros` continua sem máscara de moeda.
 - [ ] `npm test`: margem 22% BOM; 10% RUIM; 15% MÉDIO; 20% BOM; 25% EXCELENTE; preço Brasil 0 não analisa; 270,00 e `270.0000` leem como 270.
 
@@ -300,7 +308,7 @@ O que existe:
 - Zod em toda entrada. Campos gravados são explícitos. SQL de filtro da última classificação usa query parametrizada e a classificação só entra se estiver na lista fechada.
 - Upload: tamanho, magic bytes, nome uuid, caminho preso a `storage/products/`.
 - Login: mesma mensagem para e-mail e senha, hash dummy quando o e-mail não existe, limite de 10 falhas por IP a cada 15 minutos.
-- Mutação exige `Origin` igual ao `Host` quando o header vem. Headers: `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, CSP e HSTS em produção. No CSP, `script-src` em desenvolvimento inclui `'unsafe-eval'` porque o webpack do `next dev` usa `eval-source-map`; em produção o `script-src` fica só com `'self'` e `'unsafe-inline'`.
+- Mutação exige `Origin` igual ao `Host` quando o header vem. Headers: `nosniff`, `Referrer-Policy`, `X-Frame-Options`, `Permissions-Policy`, CSP e HSTS em produção. No CSP, `script-src` em desenvolvimento inclui `'unsafe-eval'` porque o webpack do `next dev` usa `eval-source-map`; em produção o `script-src` fica só com `'self'` e `'unsafe-inline'`. `media-src` permite `'self'`, `blob:` e `mediastream:` para a prévia da câmera. `Permissions-Policy` continua `camera=(self)`, sem microfone nem geolocalização.
 - Erro inesperado não devolve stack. Log de auditoria não inclui senha.
 
 Não implementado: convite, cadastro público, Web Push, fila offline, várias empresas, cotação automática.

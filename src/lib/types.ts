@@ -42,6 +42,9 @@ export type ProductCard = {
 export type Catalog = {
   products: ProductCard[];
   segments: string[];
+  page: number;
+  page_size: number;
+  total: number;
 };
 
 export type Composition = {

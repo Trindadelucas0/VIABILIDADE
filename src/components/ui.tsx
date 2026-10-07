@@ -8,17 +8,17 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const buttonClass: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  primary: "bg-accent text-white border-accent",
-  secondary: "bg-surface text-ink border-line",
-  ghost: "bg-transparent text-accent border-transparent",
-  danger: "bg-surface text-danger border-danger",
+  primary: "bg-accent text-white border-accent hover:opacity-90 active:scale-[0.98]",
+  secondary: "bg-surface text-ink border-line hover:bg-bg active:scale-[0.98]",
+  ghost: "bg-transparent text-accent border-transparent active:scale-[0.98]",
+  danger: "bg-surface text-danger border-danger hover:bg-bg active:scale-[0.98]",
 };
 
 export function Button({ variant = "primary", className = "", type = "button", ...props }: ButtonProps) {
   return (
     <button
       type={type}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-base font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${buttonClass[variant]} ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-4 text-base font-semibold transition-[transform,opacity,background-color] duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${buttonClass[variant]} ${className}`}
       {...props}
     />
   );
@@ -158,8 +158,8 @@ export function ConfirmDialog({
 export function PageIntro({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <header className="mb-6 grid gap-1">
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-      {subtitle ? <p className="text-sm text-muted">{subtitle}</p> : null}
+      <h1 className="page-title">{title}</h1>
+      {subtitle ? <p className="text-sm font-normal text-muted">{subtitle}</p> : null}
     </header>
   );
 }
