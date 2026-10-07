@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { IconBack } from "../../../../components/icons";
+import { MoneyField } from "../../../../components/money-field";
 import { Button, Field, PageIntro, useToast } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 import { notifySaved } from "../../../../lib/notify";
@@ -342,11 +343,11 @@ export default function NewProductPage() {
         <div className="grid gap-4">
           <Field label="Preço na feira (USD)" hint="Entra na análise." error={fields.fair_price_usd}>
             {(id) => (
-              <input
+              <MoneyField
                 id={id}
-                inputMode="decimal"
+                currency="USD"
                 value={fairPrice}
-                onChange={(event) => setFairPrice(event.target.value)}
+                onChange={setFairPrice}
                 onKeyDown={onFieldKeyDown}
                 autoFocus
               />

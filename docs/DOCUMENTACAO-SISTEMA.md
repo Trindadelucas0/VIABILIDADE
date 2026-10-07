@@ -3,7 +3,7 @@
 | Item | Valor |
 |------|--------|
 | Versão do sistema | 1.0.0 — Viabilidade |
-| Última atualização | 07/10/2026 (abrir produto a partir da comparação deixa de responder 404) |
+| Última atualização | 07/10/2026 (preço na digitação mostra R$ ou US$ e 270 vira 270,00) |
 | Fonte oficial | Este arquivo |
 | Anexos | [prd-flow](prd-flow), [trd](trd), [implementacao](implementacao) |
 
@@ -30,7 +30,7 @@ Não há cadastro público nem tela de convite. O administrador inicial vem de `
 
 | Versão | Nome | O que entrou |
 |--------|------|----------------|
-| 1.0.0 | Viabilidade | Login por seed, catálogo com escopo, análise com snapshot, lote, comparação, dashboard, parâmetros, PWA online-first. Correção: o id na URL do produto, da foto e do fornecedor aceita UUID v4 (o quarto grupo tem 4 caracteres). |
+| 1.0.0 | Viabilidade | Login por seed, catálogo com escopo, análise com snapshot, lote, comparação, dashboard, parâmetros, PWA online-first. Correção: o id na URL do produto, da foto e do fornecedor aceita UUID v4 (o quarto grupo tem 4 caracteres). Preço na feira e preço Brasil formatam na digitação (US$ / R$, 270 = 270,00). |
 
 `package.json` está em `1.0.0`.
 
@@ -167,6 +167,8 @@ Wizard de seis passos na mesma rota (`/produtos/novo`): Foto, Nome, Preço USD, 
 
 A lista de fornecedores existentes é a do operador. Admin vê todos. Moeda gravada: USD. O último fornecedor usado fica em `sessionStorage` (`viabilidade_last_supplier`) para o próximo cadastro.
 
+No passo Preço, o campo mostra `US$` fixo na frente. Digitar 270 mostra `US$ 270` na hora e `US$ 270,00` ao sair. Centavos só depois da vírgula ou do ponto. O valor gravado continua número (`270.00`), não o texto com símbolo.
+
 Depois de salvar, a tela volta ao passo Foto com os campos do produto limpos e o fornecedor mantido. Trilha dos seis passos indica o passo atual. Hints **Entra na análise.** em Nome, Preço na feira e Nome do fornecedor; **Opcional.** em Stand e Segmento. Se houver `viabilidade_last_supplier`, aparece "Mesmo fornecedor da última ficha." Cartão **Salvo** com link **Abrir prontuário**. Câmbio e alíquotas vêm de `/parametros`; quando o admin salva lá, o prontuário atualiza a lista **Falta** sem editar o produto de novo. **Analisar** só no prontuário.
 
 Câmera recusada: a mensagem fica no bloco da foto e **Pular** segue habilitado.
@@ -179,13 +181,15 @@ Vazio de busca: "Nenhum produto com esse filtro" e Limpar. Vazio real: link para
 
 ### 6.5 Prontuário
 
-Foto principal, bloco **Falta** quando aplicável, seções **Preços** (preço Brasil em destaque enquanto vazio), **Produto**, **Fornecedor**, **Galeria** e **Histórico** (margem em destaque por linha). Barra fixa inferior: **Salvar** e **Analisar** (primário). **Arquivar** e **Excluir** (admin) ficam no histórico, com confirmação pelo nome. Analisar fica desabilitado enquanto `can_analyze` for falso. Sem foto: "Sem imagem" e Adicionar foto.
+Foto principal, bloco **Falta** quando aplicável, seções **Preços** (preço Brasil em destaque enquanto vazio), **Produto**, **Fornecedor**, **Galeria** e **Histórico** (margem em destaque por linha). Na seção Preços, a feira usa `US$` e o Brasil usa `R$` na frente do número. 270 aparece como 270,00 ao sair do campo; o ponto de milhar é do campo (`2.700`). Câmbio e percentuais em `/parametros` não usam essa máscara. Lista, resultado, composição e comparação já mostram R$ ou US$ via `formatBrl` / `formatUsd`. Barra fixa inferior: **Salvar** e **Analisar** (primário). **Arquivar** e **Excluir** (admin) ficam no histórico, com confirmação pelo nome. Analisar fica desabilitado enquanto `can_analyze` for falso. Sem foto: "Sem imagem" e Adicionar foto.
 
 ### 6.6 Resultado e composição
 
 Mostram a análise gravada (a última, ou a escolhida em `?analise=`). Não recalculam. Reanalisar cria outra linha e permanece na rota. Alterar parâmetros: admin vai para `/parametros`; operador vê o controle desabilitado com "Só o admin altera os parâmetros".
 
-A composição lista FOB, impostos, nacionalização, frete, custo final e os percentuais do snapshot.
+O resultado inclui o bloco **De onde veio o custo**: preço na feira (USD), câmbio do snapshot (`1 USD = R$`) e valor convertido (FOB em R$, preço na feira × câmbio). Em seguida vêm preço Brasil, custo final, resultado bruto, impostos sobre venda, custo operacional e resultado líquido.
+
+A composição usa o mesmo formato de câmbio (`1 USD = R$`) e detalha FOB convertido, impostos de importação, nacionalização, frete, custo final e os percentuais do snapshot.
 
 ### 6.7 Comparação
 
@@ -226,6 +230,8 @@ margem = resultado_liquido / preco_brasil
 
 As alíquotas no banco são fração (8% gravado como 0,08). A tela de parâmetros fala em percentual.
 
+Preço digitado: `parseMoney` em `src/server/money-input.ts` aceita `270`, `270,50`, `R$ 270,00`, `US$ 1.270,50` e o texto da API `270.0000` (270 reais, não 270 milhões). `270.000` sem vírgula é milhar (270 mil). A máscara da tela limita a centavos; um valor já gravado com 3ª ou 4ª casa só arredonda se o campo for editado e salvo de novo.
+
 Prova: câmbio 5, USD 10, alíquotas de custo 10%, Brasil 100, venda 8%, operacional 5% produzem margem 0,22 e classificação BOM.
 
 ### 7.4 Classificação
@@ -260,7 +266,7 @@ Disco em `storage/products/`, nome uuid, no máximo 8 MB e 10 imagens por produt
 2. Suba o Postgres, rode `npx prisma migrate deploy` e `npm run dev`.
 3. Abra `/login` e entre com o e-mail do operador.
 4. Peça ao admin para abrir `/parametros` e salvar câmbio e alíquotas. Sem isso, o produto grava como pendente com "Câmbio nos parâmetros".
-5. Em Novo, percorra o wizard (foto opcional, nome, preço USD, stand, segmento, fornecedor) e toque **Salvar**. O fluxo reabre a foto do próximo produto com o mesmo fornecedor.
+5. Em Novo, percorra o wizard (foto opcional, nome, preço USD, stand, segmento, fornecedor) e toque **Salvar**. No preço, digite 270 e confira `US$ 270,00` ao sair do campo. O fluxo reabre a foto do próximo produto com o mesmo fornecedor.
 6. Depois da feira, abra o prontuário, informe o preço no Brasil e toque **Analisar** quando **Falta** estiver vazio (inclui parâmetros em `/parametros`).
 7. No catálogo, marque produtos e use Analisar selecionados para ir à comparação.
 8. O admin, em Início, usa Todos para ver a equipe e Meus para ver só o próprio cadastro. O operador não vê esse filtro.
@@ -279,7 +285,8 @@ Notificação local: o navegador só é consultado depois do primeiro produto sa
 - [ ] PATCH de parâmetros pelo operador retorna 403; análise antiga guarda a versão anterior.
 - [ ] Foto sem cookie retorna 401; arquivo não está em `public/`.
 - [ ] Offline: o shell pode abrir; a lista mostra "Sem conexão" e não grava cadastro local.
-- [ ] `npm test`: margem 22% BOM; 10% RUIM; 15% MÉDIO; 20% BOM; 25% EXCELENTE; preço Brasil 0 não analisa.
+- [ ] No passo Preço e no prontuário, digitar 270 mostra US$ ou R$ na frente e 270,00 ao sair. Letras não entram. `/parametros` continua sem máscara de moeda.
+- [ ] `npm test`: margem 22% BOM; 10% RUIM; 15% MÉDIO; 20% BOM; 25% EXCELENTE; preço Brasil 0 não analisa; 270,00 e `270.0000` leem como 270.
 
 O teste unitário não usa Postgres. A API contra o banco não foi executada nesta entrega se o Postgres local não estava disponível.
 

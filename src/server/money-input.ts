@@ -1,17 +1,17 @@
 import { Decimal } from "../domain/money";
+import { readMoney } from "../lib/money-mask";
 import { AppError } from "./errors";
 
 export function parseMoney(value: string | null | undefined, field: string): Decimal | null {
   if (value == null) return null;
-  const trimmed = value.trim();
-  if (trimmed === "") return null;
-  const normalized = trimmed.replace(/\s/g, "").replace(",", ".");
-  if (!/^\d+(\.\d+)?$/.test(normalized)) {
+  const read = readMoney(value);
+  if (read.status === "empty") return null;
+  if (read.status === "invalid") {
     throw new AppError(422, "VALIDATION", "Valor inválido.", {
       fields: { [field]: "Use um número maior ou igual a zero." },
     });
   }
-  const amount = new Decimal(normalized);
+  const amount = new Decimal(read.api);
   if (amount.gt("9999999999.9999")) {
     throw new AppError(422, "VALIDATION", "Valor grande demais.", {
       fields: { [field]: "O valor passa do limite." },

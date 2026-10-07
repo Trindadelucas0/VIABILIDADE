@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { IconBack } from "../../../../../components/icons";
 import { Button, classificationSurface, ErrorState, Skeleton, useToast } from "../../../../../components/ui";
 import { api, ApiError } from "../../../../../lib/api";
-import { formatBrl, formatMargin, formatWhen } from "../../../../../lib/format";
+import { formatBrl, formatExchange, formatMargin, formatUsd, formatWhen } from "../../../../../lib/format";
 import { CLASS_HINT, CLASS_LABEL } from "../../../../../lib/labels";
 import { notifySaved } from "../../../../../lib/notify";
 import type { ProductDetail, User } from "../../../../../lib/types";
@@ -89,6 +89,26 @@ function ResultPage() {
             <p className="mt-2 text-sm text-muted">
               Análise #{analysis.sequence} · versão {analysis.parameter_version} · {formatWhen(analysis.created_at)}
             </p>
+          </section>
+          <section className="section-card grid gap-3">
+            <h2 className="section-title">De onde veio o custo</h2>
+            <dl className="grid gap-3">
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Preço na feira</dt>
+                <dd className="font-semibold">{formatUsd(analysis.composition.fair_price_usd)}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Câmbio da análise</dt>
+                <dd className="text-right font-semibold">{formatExchange(analysis.composition.exchange_rate)}</dd>
+              </div>
+              <div className="flex justify-between gap-4 border-b border-line pb-3">
+                <dt className="text-muted">
+                  Valor convertido
+                  <span className="mt-0.5 block text-xs font-normal">preço na feira × câmbio</span>
+                </dt>
+                <dd className="font-semibold">{formatBrl(analysis.composition.fob_brl)}</dd>
+              </div>
+            </dl>
           </section>
           <dl className="section-card gap-3">
             <div className="flex justify-between gap-4">

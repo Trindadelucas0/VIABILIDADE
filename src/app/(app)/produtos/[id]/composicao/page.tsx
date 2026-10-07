@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { IconBack } from "../../../../../components/icons";
 import { ErrorState, Skeleton } from "../../../../../components/ui";
 import { api, ApiError } from "../../../../../lib/api";
-import { formatBrl, formatMargin, formatPlain, formatUsd } from "../../../../../lib/format";
+import { formatBrl, formatExchange, formatMargin, formatUsd } from "../../../../../lib/format";
 import type { ProductDetail } from "../../../../../lib/types";
 
 function CompositionPage() {
@@ -40,7 +40,7 @@ function CompositionPage() {
 
   const rows = [
     ["Preço na feira", formatUsd(analysis.composition.fair_price_usd)],
-    ["Câmbio", formatPlain(analysis.composition.exchange_rate)],
+    ["Câmbio da análise", formatExchange(analysis.composition.exchange_rate)],
     ["FOB convertido", formatBrl(analysis.composition.fob_brl)],
     ["Impostos importação", formatBrl(analysis.composition.import_tax_brl)],
     ["Nacionalização", formatBrl(analysis.composition.nationalization_brl)],

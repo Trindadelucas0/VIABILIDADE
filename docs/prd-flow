@@ -443,6 +443,13 @@ Essas faixas já fazem parte da lógica atual de análise da planilha de referê
 │       Prioridade para validação comercial                    │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
+│ DE ONDE VEIO O CUSTO                                         │
+│ PREÇO NA FEIRA                          US$ 12,50             │
+│ CÂMBIO DA ANÁLISE                       1 USD = R$ 5,43       │
+│ VALOR CONVERTIDO                        R$ 67,88              │
+│              preço na feira × câmbio                         │
+│                                                              │
+├──────────────────────────────────────────────────────────────┤
 │ PREÇO NO BRASIL                         R$ 249,90             │
 │ CUSTO FINAL                             R$ 110,00             │
 │ RESULTADO BRUTO                         R$ 139,90             │
@@ -466,7 +473,8 @@ O usuário poderá abrir os detalhes para entender como o resultado foi formado.
 │ COMPOSIÇÃO DO CUSTO                         │
 ├─────────────────────────────────────────────┤
 │ Preço na feira              US$ 12,50       │
-│ Conversão                   R$ 00,00        │
+│ Câmbio da análise           1 USD = R$ 5,43 │
+│ FOB convertido              R$ 67,88        │
 │ Impostos importação         R$ 00,00        │
 │ Nacionalização              R$ 00,00        │
 │ Frete + outros              R$ 00,00        │

@@ -26,6 +26,11 @@ export function formatPlain(value: string | null | undefined): string {
   return number.format(asNumber(value));
 }
 
+export function formatExchange(value: string | null | undefined): string {
+  if (value == null || value === "") return "—";
+  return `1 USD = R$ ${exchange.format(asNumber(value))}`;
+}
+
 export function formatMargin(rate: string): string {
   return `${percent.format(new Decimal(rate).mul(100).toNumber())}%`;
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IconBack } from "../../../../components/icons";
+import { MoneyField } from "../../../../components/money-field";
 import { Badge, Button, ConfirmDialog, ErrorState, Field, PageIntro, SectionCard, Skeleton, useToast } from "../../../../components/ui";
 import { api, ApiError } from "../../../../lib/api";
 import { formatMargin, formatUsd, formatWhen } from "../../../../lib/format";
@@ -203,7 +204,7 @@ export default function ProductPage() {
       <SectionCard title="Preços">
         <Field label="Preço na feira (USD)" error={fields.fair_price_usd}>
           {(id) => (
-            <input id={id} inputMode="decimal" value={form.fair_price_usd} onChange={(event) => set("fair_price_usd", event.target.value)} />
+            <MoneyField id={id} currency="USD" value={form.fair_price_usd} onChange={(value) => set("fair_price_usd", value)} />
           )}
         </Field>
         <Field
@@ -212,12 +213,12 @@ export default function ProductPage() {
           error={fields.brazil_price_brl}
         >
           {(id) => (
-            <input
+            <MoneyField
               id={id}
-              className={brazilPriceEmpty ? "field-accent" : undefined}
-              inputMode="decimal"
+              currency="BRL"
+              accent={brazilPriceEmpty}
               value={form.brazil_price_brl}
-              onChange={(event) => set("brazil_price_brl", event.target.value)}
+              onChange={(value) => set("brazil_price_brl", value)}
             />
           )}
         </Field>

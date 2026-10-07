@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button, ErrorState, Field, PageIntro, SectionCard, Skeleton, useToast } from "../../../components/ui";
 import { api, ApiError } from "../../../lib/api";
-import { formatPlain } from "../../../lib/format";
+import { formatExchange, formatPlain } from "../../../lib/format";
 import type { Parameters } from "../../../lib/types";
 
 type ParameterForm = {
@@ -140,7 +140,9 @@ export default function ParametersPage() {
           <SectionCard>
             <div className="grid gap-1">
               <dt className="text-sm font-semibold">Câmbio (R$ por 1 USD)</dt>
-              <dd className={form.exchange_rate.trim() ? "text-emphasis" : "text-warn"}>{form.exchange_rate || "—"}</dd>
+              <dd className={form.exchange_rate.trim() ? "text-emphasis" : "text-warn"}>
+                {form.exchange_rate.trim() ? formatExchange(form.exchange_rate.replace(",", ".")) : "—"}
+              </dd>
             </div>
           </SectionCard>
           <SectionCard title="Custo na entrada">
