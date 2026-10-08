@@ -377,17 +377,15 @@ export async function listProducts(
       const ids = await latestIdsByClassification(tx, actor, query.visibility, query.classificacao);
       where.id = { in: ids };
     }
-    const [total, products, parameters] = await Promise.all([
-      tx.product.count({ where }),
-      tx.product.findMany({
-        where,
-        include: listInclude,
-        orderBy: { updatedAt: "desc" },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      currentParameters(tx),
-    ]);
+    const total = await tx.product.count({ where });
+    const products = await tx.product.findMany({
+      where,
+      include: listInclude,
+      orderBy: { updatedAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+    const parameters = await currentParameters(tx);
     const segments = await tx.product.findMany({
       where: productWhere(actor, query.visibility),
       select: { segment: true },

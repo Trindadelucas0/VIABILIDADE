@@ -1,5 +1,6 @@
 "use client";
 
+import Decimal from "decimal.js";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -7,26 +8,50 @@ import { Badge, Button, EmptyState, ErrorState, PageIntro, Skeleton } from "../.
 import { api, ApiError } from "../../../lib/api";
 import { formatBrl, formatMargin } from "../../../lib/format";
 import { CLASS_LABEL } from "../../../lib/labels";
-import type { Catalog, CompareItem } from "../../../lib/types";
+import type { Catalog, Classification, CompareItem } from "../../../lib/types";
+
+const MARGIN_TEXT: Record<Classification, string> = {
+  RUIM: "text-danger",
+  FRACO: "text-warn",
+  MEDIO: "text-accent",
+  BOM: "text-ok",
+  EXCELENTE: "text-ok",
+};
+
+function classificationBadge(classification: Classification): "danger" | "warn" | "info" | "ok" {
+  if (classification === "RUIM") return "danger";
+  if (classification === "FRACO") return "warn";
+  if (classification === "MEDIO") return "info";
+  return "ok";
+}
+
+function netResultClass(value: string): string {
+  const shown = formatBrl(value);
+  if (shown.startsWith("-")) return "text-danger";
+  const amount = new Decimal(value);
+  if (amount.isZero()) return "text-ink";
+  if (amount.gt(0)) return "text-ok";
+  return "text-danger";
+}
 
 function CompareTable({ items, reasons }: { items: CompareItem[]; reasons: Record<string, string> }) {
   return (
     <>
-      <div className="hidden overflow-x-auto md:block">
+      <section className="section-card section-card-roomy hidden overflow-x-auto md:grid">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-line">
-              <th className="py-3 pr-4">Produto</th>
-              <th className="py-3 pr-4">Custo final</th>
-              <th className="py-3 pr-4">Preço Brasil</th>
-              <th className="py-3 pr-4">Resultado líquido</th>
-              <th className="py-3">Margem</th>
+              <th className="py-4 pr-4">Produto</th>
+              <th className="py-4 pr-4">Custo final</th>
+              <th className="py-4 pr-4">Preço Brasil</th>
+              <th className="py-4 pr-4">Resultado líquido</th>
+              <th className="py-4">Margem</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item) => (
               <tr key={item.id} className="border-b border-line">
-                <td className="py-3 pr-4">
+                <td className="py-4 pr-4">
                   {item.found ? (
                     <Link href={item.analysis ? `/produtos/${item.id}/resultado` : `/produtos/${item.id}`}>{item.name || "Sem nome"}</Link>
                   ) : (
@@ -35,20 +60,20 @@ function CompareTable({ items, reasons }: { items: CompareItem[]; reasons: Recor
                 </td>
                 {item.found && item.analysis ? (
                   <>
-                    <td className="py-3 pr-4">{formatBrl(item.analysis.final_cost_brl)}</td>
-                    <td className="py-3 pr-4">{formatBrl(item.analysis.market_price_brl)}</td>
-                    <td className="py-3 pr-4">{formatBrl(item.analysis.net_result_brl)}</td>
-                    <td className="py-3">
+                    <td className="py-4 pr-4">{formatBrl(item.analysis.final_cost_brl)}</td>
+                    <td className="py-4 pr-4">{formatBrl(item.analysis.market_price_brl)}</td>
+                    <td className={`py-4 pr-4 ${netResultClass(item.analysis.net_result_brl)}`}>{formatBrl(item.analysis.net_result_brl)}</td>
+                    <td className="py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-emphasis">{formatMargin(item.analysis.margin)}</span>
-                        <Badge tone={item.analysis.classification === "EXCELENTE" || item.analysis.classification === "BOM" ? "ok" : "info"}>
+                        <span className={`text-emphasis ${MARGIN_TEXT[item.analysis.classification]}`}>{formatMargin(item.analysis.margin)}</span>
+                        <Badge tone={classificationBadge(item.analysis.classification)}>
                           {CLASS_LABEL[item.analysis.classification]}
                         </Badge>
                       </div>
                     </td>
                   </>
                 ) : (
-                  <td className="py-3" colSpan={4}>
+                  <td className="py-4" colSpan={4}>
                     {item.found ? reasons[item.id] || "Sem análise" : "Sem análise"}
                   </td>
                 )}
@@ -56,20 +81,22 @@ function CompareTable({ items, reasons }: { items: CompareItem[]; reasons: Recor
             ))}
           </tbody>
         </table>
-      </div>
+      </section>
       <ul className="grid gap-3 md:hidden">
         {items.map((item) => (
-          <li key={item.id} className="rounded-xl border border-line bg-surface p-4">
+          <li key={item.id} className="rounded-xl border border-line bg-surface p-6">
             {!item.found ? <p>Produto não encontrado</p> : null}
             {item.found ? (
               <Link href={item.analysis ? `/produtos/${item.id}/resultado` : `/produtos/${item.id}`} className="grid gap-2 no-underline">
                 <div className="flex items-start justify-between gap-3">
                   <span className="font-semibold text-ink">{item.name || "Sem nome"}</span>
-                  {item.analysis ? <span className="text-display shrink-0">{formatMargin(item.analysis.margin)}</span> : null}
+                  {item.analysis ? (
+                    <span className={`text-display shrink-0 ${MARGIN_TEXT[item.analysis.classification]}`}>{formatMargin(item.analysis.margin)}</span>
+                  ) : null}
                 </div>
                 {item.analysis ? (
                   <>
-                    <Badge tone={item.analysis.classification === "EXCELENTE" || item.analysis.classification === "BOM" ? "ok" : "info"}>
+                    <Badge tone={classificationBadge(item.analysis.classification)}>
                       {CLASS_LABEL[item.analysis.classification]}
                     </Badge>
                     <dl className="grid gap-1 text-sm">
@@ -83,7 +110,7 @@ function CompareTable({ items, reasons }: { items: CompareItem[]; reasons: Recor
                       </div>
                       <div className="flex justify-between gap-3">
                         <dt className="text-muted">Resultado líquido</dt>
-                        <dd className="font-semibold">{formatBrl(item.analysis.net_result_brl)}</dd>
+                        <dd className={`font-semibold ${netResultClass(item.analysis.net_result_brl)}`}>{formatBrl(item.analysis.net_result_brl)}</dd>
                       </div>
                     </dl>
                   </>

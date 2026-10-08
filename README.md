@@ -16,6 +16,8 @@ npx prisma migrate deploy
 npm run dev
 ```
 
+O servidor de desenvolvimento sobe em `http://localhost:3337`. `npm start` usa a mesma porta.
+
 Logins locais de exemplo (se usar o `.env` gerado pelo projeto): `admin@viabilidade.local` / `feira-admin-local` e `operador@viabilidade.local` / `feira-operador-local`.
 
 O seed de usuários e da linha de parâmetros roda na subida do servidor e também com `npm run db:seed`. O log não imprime senha.

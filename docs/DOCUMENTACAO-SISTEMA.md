@@ -2,8 +2,8 @@
 
 | Item | Valor |
 |------|--------|
-| Versão do sistema | 1.0.2 — Viabilidade |
-| Última atualização | 07/10/2026 (barra do celular com ícones 32px e câmera com pedido de permissão; `/comparar` em páginas de 20) |
+| Versão do sistema | 1.0.4 — Viabilidade |
+| Última atualização | 08/10/2026 (ficha: resumo e fotos em cards; Preços, Histórico, comparação e Principais oportunidades com 24px; margem, selo e resultado líquido na cor da classificação; dica do nome do fornecedor em azul) |
 | Fonte oficial | Este arquivo |
 | Anexos | [prd-flow](prd-flow), [trd](trd), [implementacao](implementacao) |
 
@@ -30,11 +30,13 @@ Não há cadastro público nem tela de convite. O administrador inicial vem de `
 
 | Versão | Nome | O que entrou |
 |--------|------|----------------|
-| 1.0.2 | Viabilidade | `/comparar` sem `ids` na URL lista produtos com status analisado (`GET /api/products?status=ANALYZED&page=`), compara a página visível com `POST /api/analyses/compare` e pagina 20 por `?page=`. Vazio: "Nenhum produto analisado" com link para `/produtos`. **Analisar selecionados** em `/produtos` continua abrindo `/comparar?ids=` só com a seleção, sem paginação de catálogo. Barra do celular: ícones 32px, alvo 56px, acima da área segura. Passo Foto pede a câmera no toque, explica o bloqueio no Android e no iPhone e oferece Abrir a câmera do celular. |
+| 1.0.4 | Viabilidade | No prontuário, resumo e fotos passam a ser dois cards. No celular o resumo vem primeiro; a partir de 960px a foto fica acima do resumo. **Falta** continua fora desses cards. **Preços** e **Histórico** ganham 24px internos. A dica **Entra na análise.** do nome do fornecedor fica azul; **Preencha para poder analisar.** continua cinza. Em `/comparar`, a tabela desktop entra num card de 24px; no celular o card da linha usa o mesmo respiro. Margem e selo seguem a cor da classificação (Ruim vermelho, Fraco âmbar, Médio azul, Bom e Excelente verde). Resultado líquido negativo fica vermelho, positivo verde e zero sem cor extra. Em **Início**, **Principais oportunidades** entra no mesmo card de 24px, com a mesma cor na margem e no selo. |
+| 1.0.3 | Viabilidade | No prontuário, **Referência do preço** passa a ser caixas Mercado Livre, Shopee, Amazon, Magalu e Outros. Outros pede o nome da fonte. Texto antigo fora da lista abre em Outros. A coluna `brazil_price_reference` continua texto; o próximo Salvar grava uma loja por linha. A ficha mostra resumo com nome, status, stand, preço USD gravado e última margem na cor da classificação (ou "Sem análise"). Foto e miniaturas ficam no mesmo bloco. **Arquivar** e **Excluir** vão para **Mais**. Abaixo de 960px, Salvar e Analisar ficam fixos acima da barra inferior, com a frase de bloqueio dentro da barra. A partir de 960px, duas colunas e as ações no fim do formulário. |
+| 1.0.2 | Viabilidade | `/comparar` sem `ids` na URL lista produtos com status analisado (`GET /api/products?status=ANALYZED&page=`), compara a página visível com `POST /api/analyses/compare` e pagina 20 por `?page=`. Vazio: "Nenhum produto analisado" com link para `/produtos`. **Analisar selecionados** em `/produtos` continua abrindo `/comparar?ids=` só com a seleção, sem paginação de catálogo. Barra do celular: ícones 32px, alvo 56px, acima da área segura. Passo Foto pede a câmera no toque, explica o bloqueio no Android e no iPhone e oferece Abrir a câmera do celular. `npm run dev` e `npm start` escutam na porta 3337. Painel e catálogo leem o banco em sequência dentro da transação. O pool em `src/server/db.ts` usa `pipeline`, para o driver `pg` aceitar relações carregadas juntas. |
 | 1.0.1 | Viabilidade | Catálogo em `/produtos` com 20 cards por página (`?page=`), Anterior/Próxima, total na resposta de `GET /api/products`. A lista não carrega composição de análise (só a última margem/classificação para o card). Marcar para **Analisar selecionados** vale só na página visível; trocar página, filtro, busca ou Todos/Meus limpa a marcação. |
 | 1.0.0 | Viabilidade | Login por seed, catálogo com escopo, análise com snapshot, lote, comparação, dashboard, parâmetros, PWA online-first. Correção: o id na URL do produto, da foto e do fornecedor aceita UUID v4 (o quarto grupo tem 4 caracteres). Preço na feira e preço Brasil formatam na digitação (US$ / R$, 270 = 270,00). Ícone PWA próprio (V em `#0b3a82`), apple-touch, favicon e rotas de ícone liberadas no middleware sem sessão. |
 
-`package.json` está em `1.0.2`.
+`package.json` está em `1.0.4`.
 
 ## 3. Mapa de telas
 
@@ -100,6 +102,7 @@ Não há empresa nem feira como entidade. O isolamento é `created_by` do usuár
 | `GET /api/dashboard` | `src/app/api/dashboard/route.ts` |
 | Cálculo | `src/domain/analysis-service.ts` |
 | Completude | `src/domain/can-analyze.ts` |
+| Referência de preço | `src/lib/price-reference.ts` |
 | Classificação | `src/domain/classification.ts` |
 | Escopo | `src/server/auth/scope.ts` |
 | Sessão | `src/server/auth/session.ts` |
@@ -148,7 +151,7 @@ Código: `src/app/(app)/usuarios/page.tsx`, `src/app/api/users/route.ts`, `src/a
 
 ### 6.2 Início
 
-Ordem na tela: **Principais oportunidades** (margem em destaque e classificação), depois contadores (Produtos, Pendentes, Analisados, Excelentes), busca com botão **Buscar** (Enter faz o mesmo) para `/produtos?q=`, chips de atalho para `/produtos` com `status` ou `classificacao`. Oportunidades são as cinco maiores margens da última análise. Admin vê Todos | Meus (padrão Todos). Sem produtos: "Nenhum produto ainda" e **Cadastrar produto**. Com produtos e sem análise: "Nenhum produto analisado ainda" e **Ver pendentes**. Erro de rede: "Sem conexão. Os dados precisam de internet." e Tentar de novo.
+Ordem na tela: **Principais oportunidades** (card com 24px; margem e selo na cor da classificação — Ruim vermelho, Fraco âmbar, Médio azul, Bom e Excelente verde; o nome do produto continua sem cor extra), depois contadores (Produtos, Pendentes, Analisados, Excelentes), busca com botão **Buscar** (Enter faz o mesmo) para `/produtos?q=`, chips de atalho para `/produtos` com `status` ou `classificacao`. Oportunidades são as cinco maiores margens da última análise. O título **Início**, o subtítulo e a barra **Olá / Sair** ficam fora desse card. Admin vê Todos | Meus (padrão Todos). Sem produtos: "Nenhum produto ainda" e **Cadastrar produto**. Com produtos e sem análise: "Nenhum produto analisado ainda" e **Ver pendentes**. Erro de rede: "Sem conexão. Os dados precisam de internet." e Tentar de novo.
 
 Código: `src/app/(app)/page.tsx`, `src/server/dashboard/service.ts`.
 
@@ -186,7 +189,17 @@ Vazio de busca: "Nenhum produto com esse filtro" e Limpar. Vazio real: link para
 
 ### 6.5 Prontuário
 
-Foto principal, bloco **Falta** quando aplicável, seções **Preços** (preço Brasil em destaque enquanto vazio), **Produto**, **Fornecedor**, **Galeria** e **Histórico** (margem em destaque por linha). Na seção Preços, a feira usa `US$` e o Brasil usa `R$` na frente do número. 270 aparece como 270,00 ao sair do campo; o ponto de milhar é do campo (`2.700`). Câmbio e percentuais em `/parametros` não usam essa máscara. Lista, resultado, composição e comparação já mostram R$ ou US$ via `formatBrl` / `formatUsd`. Barra fixa inferior: **Salvar** e **Analisar** (primário). **Arquivar** e **Excluir** (admin) ficam no histórico, com confirmação pelo nome. Analisar fica desabilitado enquanto `can_analyze` for falso. Sem foto: "Sem imagem" e Adicionar foto.
+O resumo lê o produto gravado: nome (fora do card), badge de status, stand, preço na feira (`formatUsd`) e a última margem. Resumo e fotos são dois cards. No celular o resumo vem primeiro; a partir de 960px a foto fica no topo da coluna esquerda e o resumo abaixo. A margem usa a cor da classificação — Ruim em vermelho, Fraco em âmbar, Médio em azul, Bom e Excelente em verde — sobre o fundo da mesma família, com o texto de `CLASS_HINT` abaixo. Sem análise: "Sem análise", sem link. Com análise, o cartão da margem abre `/produtos/[id]/resultado` e traz **Ver última análise**. **Falta** continua fora dos dois cards e aparece só quando `missing` tem itens.
+
+A foto principal fica no card de fotos, com as miniaturas (rolagem horizontal, **Remover** em cada uma), **Adicionar foto** e a legenda "Até 10 fotos por produto." **Adicionar foto** não mostra o texto nativo do arquivo. No máximo 10 fotos; no limite o controle não abre o seletor. Sem foto: um único "Sem imagem".
+
+Seções do formulário, nesta ordem: **Preços** (24px internos; feira em `US$`, Brasil em `R$`; vazio fica em destaque com "Preencha para poder analisar.", que continua cinza), **Produto**, **Fornecedor** (nome com "Entra na análise." em azul) e **Histórico** (24px internos). 270 aparece como 270,00 ao sair do campo; o ponto de milhar é do campo (`2.700`). **Referência do preço** são caixas Mercado Livre, Shopee, Amazon, Magalu e Outros (várias ao mesmo tempo). Outros mostra o campo **Qual referência?** e exige o nome ao salvar. Texto já gravado que não for uma dessas lojas abre com Outros marcado e o texto original. Câmbio e percentuais em `/parametros` não usam a máscara de moeda. Lista, resultado, composição e comparação já mostram R$ ou US$ via `formatBrl` / `formatUsd`.
+
+Cada análise do histórico ocupa duas linhas: sequência, margem na cor da classificação e o nome da classe; a data fica embaixo. O toque abre `/produtos/[id]/resultado?analise=`. Vazio: "Nenhuma análise ainda."
+
+**Mais**, no topo, abre no clique ou no toque. **Arquivar** aparece se o produto não está arquivado. **Excluir** só para admin. Os dois pedem confirmação pelo nome. Operador com produto arquivado não vê **Mais**.
+
+Abaixo de 960px, **Salvar** (secundário) e **Analisar** (primário) ficam fixos acima da barra inferior. Se Analisar estiver bloqueado e o produto não estiver arquivado, a frase fica dentro dessa barra. A partir de 960px a ficha vira duas colunas (fotos, resumo e Falta à esquerda; formulário à direita) e Salvar/Analisar entram no fim da coluna direita, sem flutuar. Analisar continua desabilitado enquanto `can_analyze` for falso. Código: `src/app/(app)/produtos/[id]/page.tsx`, `src/app/globals.css`, `src/lib/price-reference.ts`, `src/server/schemas.ts`.
 
 ### 6.6 Resultado e composição
 
@@ -198,7 +211,7 @@ A composição usa o mesmo formato de câmbio (`1 USD = R$`) e detalha FOB conve
 
 ### 6.7 Comparação
 
-Dois modos. **Sem `ids` na URL:** a tela busca o catálogo com `status=ANALYZED` e `page` (20 por página, mesmo escopo de `/produtos`: operador vê só os próprios; admin vê todos). Em seguida chama `POST /api/analyses/compare` com os ids da página. Mostra tabela (desktop) ou cards (celular) com custo final, preço Brasil, resultado líquido e margem. **Anterior** e **Próxima** trocam `?page=` em `/comparar`. Se não houver nenhum analisado: "Nenhum produto analisado" e link **Ir para produtos**. Se `total > 0` mas a página não tiver cards: "Nenhum produto nesta página" e **Primeira página**. **Com `ids` na URL** (vindo de **Analisar selecionados** em `/produtos`): só esses produtos, sem paginação de catálogo; linhas sem análise mostram o motivo gravado em `sessionStorage` (`viabilidade_skipped`) ou "Sem análise".
+Dois modos. **Sem `ids` na URL:** a tela busca o catálogo com `status=ANALYZED` e `page` (20 por página, mesmo escopo de `/produtos`: operador vê só os próprios; admin vê todos). Em seguida chama `POST /api/analyses/compare` com os ids da página. No desktop a tabela fica num card de 24px; no celular cada linha é um card com o mesmo respiro. Custo final e preço Brasil ficam sem cor extra. A margem e o selo usam a cor da classificação (Ruim vermelho, Fraco âmbar, Médio azul, Bom e Excelente verde). O resultado líquido negativo fica vermelho, o positivo verde e o zero sem cor extra. **Anterior** e **Próxima** trocam `?page=` em `/comparar`. Se não houver nenhum analisado: "Nenhum produto analisado" e link **Ir para produtos**. Se `total > 0` mas a página não tiver cards: "Nenhum produto nesta página" e **Primeira página**. **Com `ids` na URL** (vindo de **Analisar selecionados** em `/produtos`): só esses produtos, sem paginação de catálogo; linhas sem análise mostram o motivo gravado em `sessionStorage` (`viabilidade_skipped`) ou "Sem análise".
 
 `POST /api/analyses/compare` lê a última análise gravada; não recalcula nesta tela. Id fora do escopo: "Produto não encontrado". O nome do produto abre `/produtos/[id]` ou `/produtos/[id]/resultado`. Os ids do POST passam por validação UUID em `idListSchema` (1 a 50).
 
@@ -271,10 +284,10 @@ Disco em `storage/products/`, nome uuid, no máximo 8 MB e 10 imagens por produt
 
 1. Coloque no `.env` dois usuários, por exemplo um `ADMIN` e um `OPERATOR`, no formato de `.env.example`. As senhas ficam só nesse arquivo. O banco guarda o hash.
 2. Suba o Postgres, rode `npx prisma migrate deploy` e `npm run dev`.
-3. Abra `/login` e entre com o e-mail do operador.
+3. Abra `http://localhost:3337/login` e entre com o e-mail do operador.
 4. Peça ao admin para abrir `/parametros` e salvar câmbio e alíquotas. Sem isso, o produto grava como pendente com "Câmbio nos parâmetros".
 5. Em Novo, percorra o wizard (foto opcional, nome, preço USD, stand, segmento, fornecedor) e toque **Salvar**. Na foto, toque **Tirar foto** e **Permitir** quando o celular pedir a câmera; se estiver bloqueada, use **Abrir a câmera do celular** ou **Pular**. No preço, digite 270 e confira `US$ 270,00` ao sair do campo. O fluxo reabre a foto do próximo produto com o mesmo fornecedor.
-6. Depois da feira, abra o prontuário, informe o preço no Brasil e toque **Analisar** quando **Falta** estiver vazio (inclui parâmetros em `/parametros`).
+6. Depois da feira, abra o prontuário, informe o preço no Brasil, marque de onde veio a referência (Mercado Livre, Shopee, Amazon, Magalu ou Outros) e toque **Analisar** quando **Falta** estiver vazio (inclui parâmetros em `/parametros`). A referência não entra na análise. **Arquivar** e **Excluir** ficam em **Mais**, no topo da ficha. Leia a margem pela cor: vermelho é Ruim, âmbar é Fraco, azul é Médio, verde é Bom ou Excelente. A dica azul **Entra na análise.** no nome do fornecedor marca o que a análise usa. Em Comparação, resultado líquido negativo também fica vermelho.
 7. No catálogo, marque produtos **na página atual** e use Analisar selecionados para ir à comparação. Com muitos cadastros, use Anterior/Próxima (`?page=`) para ver as demais páginas.
 8. O admin, em Início, usa Todos para ver a equipe e Meus para ver só o próprio cadastro. O operador não vê esse filtro.
 9. Para o 404: com a sessão do operador, peça `GET /api/products/{id-do-admin-ou-de-outro}`. A resposta é 404. A foto desse id, sem cookie, é 401.
@@ -294,7 +307,9 @@ Notificação local: o navegador só é consultado depois do primeiro produto sa
 - [ ] Offline: o shell pode abrir; a lista mostra "Sem conexão" e não grava cadastro local.
 - [ ] Catálogo com 21+ produtos: mostra 20 cards, Próxima abre `?page=2`; marcar e trocar de página limpa a seleção.
 - [ ] No passo Preço e no prontuário, digitar 270 mostra US$ ou R$ na frente e 270,00 ao sair. Letras não entram. `/parametros` continua sem máscara de moeda.
-- [ ] `npm test`: margem 22% BOM; 10% RUIM; 15% MÉDIO; 20% BOM; 25% EXCELENTE; preço Brasil 0 não analisa; 270,00 e `270.0000` leem como 270.
+- [ ] `npm test`: margem 22% BOM; 10% RUIM; 15% MÉDIO; 20% BOM; 25% EXCELENTE; preço Brasil 0 não analisa; 270,00 e `270.0000` leem como 270; referência `Outros:` sem nome falha; `Mercado Livre, Shopee` marca as duas lojas.
+- [ ] Na ficha, resumo e fotos são dois cards; Preços e Histórico têm 24px; "Entra na análise." do fornecedor fica azul. Em `/comparar` e em Principais oportunidades, Ruim e a margem negativa ficam vermelhos.
+- [ ] No prontuário, a referência de preço mostra as cinco caixas. Outros vazio bloqueia o Salvar com "Informe a outra referência."
 
 O teste unitário não usa Postgres. A API contra o banco não foi executada nesta entrega se o Postgres local não estava disponível.
 
@@ -338,6 +353,10 @@ node --env-file=.env scripts/ensure-database.mjs
 npx prisma migrate deploy
 npm run dev
 ```
+
+`npm run dev` e `npm start` escutam na porta **3337** (`next dev -p 3337` e `next start -p 3337` em `package.json`). No celular da mesma rede, use o IP da máquina nessa porta.
+
+Na VPS, o código fica em `/root/PROJETOS/viabilidade`. O Postgres deste aplicativo é o container `viabilidade-pg`, só em `127.0.0.1:5438`. O PM2 chama o processo `viabilidade` (`npm start`). O endereço público é `http://179.199.149.12:3337`. A porta 3337 está liberada no firewall. Segredos ficam só no `.env` do servidor. Uma transação usa uma conexão: painel e catálogo não disparam várias consultas ao mesmo tempo. O adapter em `src/server/db.ts` liga `pipeline` no pool do `pg`.
 
 O boot (`src/instrumentation.ts`) recusa subir sem conexão ao banco (`resolveDatabaseUrl`), `SESSION_SECRET`, `ADMIN_EMAIL` e `ADMIN_PASSWORD`, sincroniza o admin (e entradas de `SEED_USERS` se definido), e cria a linha de parâmetros (venda 8%, operacional 5%, câmbio e demais alíquotas nulos) se ela ainda não existir. Durante `next build` o seed não roda.
 

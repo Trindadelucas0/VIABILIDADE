@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { canonicalPriceReference, parsePriceReference, priceReferenceError } from "../lib/price-reference";
 
 const optionalText = (max: number) =>
   z
@@ -36,7 +37,22 @@ export const productWriteSchema = z.object({
   currency: z.string().trim().max(3).optional(),
   brazil_price_brl: optionalText(24),
   brazil_price_notes: optionalText(2000),
-  brazil_price_reference: optionalText(200),
+  brazil_price_reference: z
+    .string()
+    .max(400, "Texto longo demais.")
+    .optional()
+    .nullable()
+    .superRefine((value, ctx) => {
+      if (value == null || value.trim() === "") return;
+      const error = priceReferenceError(parsePriceReference(value));
+      if (error) {
+        ctx.addIssue({ code: "custom", message: error });
+      }
+    })
+    .transform((value) => {
+      if (value === undefined) return undefined;
+      return canonicalPriceReference(value);
+    }),
   supplier_id: z.string().uuid("Fornecedor inválido.").optional().nullable(),
   supplier: supplierEmbedSchema.optional().nullable(),
   archive: z.boolean().optional(),

@@ -6,23 +6,21 @@ import { withActor } from "../db";
 export async function loadDashboard(actor: Actor, visibility: Visibility) {
   return withActor(actor, async (tx) => {
     const base = { ...productWhere(actor, visibility), status: { not: "ARCHIVED" as const } };
-    const [products, pending, analyzed, rows] = await Promise.all([
-      tx.product.count({ where: base }),
-      tx.product.count({ where: { ...base, status: "PENDING" } }),
-      tx.product.count({ where: { ...base, status: "ANALYZED" } }),
-      tx.product.findMany({
-        where: { ...base, analyses: { some: {} } },
-        select: {
-          id: true,
-          name: true,
-          analyses: {
-            orderBy: { sequence: "desc" },
-            take: 1,
-            select: { netMargin: true, classification: true },
-          },
+    const products = await tx.product.count({ where: base });
+    const pending = await tx.product.count({ where: { ...base, status: "PENDING" } });
+    const analyzed = await tx.product.count({ where: { ...base, status: "ANALYZED" } });
+    const rows = await tx.product.findMany({
+      where: { ...base, analyses: { some: {} } },
+      select: {
+        id: true,
+        name: true,
+        analyses: {
+          orderBy: { sequence: "desc" },
+          take: 1,
+          select: { netMargin: true, classification: true },
         },
-      }),
-    ]);
+      },
+    });
 
     const ranked = rows.flatMap((product) => {
       const latest = product.analyses[0];

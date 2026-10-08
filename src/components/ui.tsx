@@ -27,11 +27,13 @@ export function Button({ variant = "primary", className = "", type = "button", .
 export function Field({
   label,
   hint,
+  hintTone = "muted",
   error,
   children,
 }: {
   label: string;
   hint?: string;
+  hintTone?: "muted" | "accent";
   error?: string;
   children: (id: string) => ReactNode;
 }) {
@@ -41,7 +43,9 @@ export function Field({
       <span className="text-sm font-semibold">{label}</span>
       {children(id)}
       {error ? <span className="text-sm text-danger">{error}</span> : null}
-      {hint && !error ? <span className="text-sm text-muted">{hint}</span> : null}
+      {hint && !error ? (
+        <span className={hintTone === "accent" ? "text-sm text-accent" : "text-sm text-muted"}>{hint}</span>
+      ) : null}
     </label>
   );
 }
@@ -164,9 +168,17 @@ export function PageIntro({ title, subtitle }: { title: string; subtitle?: strin
   );
 }
 
-export function SectionCard({ title, children }: { title?: string; children: ReactNode }) {
+export function SectionCard({
+  title,
+  children,
+  className = "",
+}: {
+  title?: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <section className="section-card">
+    <section className={`section-card${className ? ` ${className}` : ""}`}>
       {title ? <h2 className="section-title">{title}</h2> : null}
       {children}
     </section>

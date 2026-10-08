@@ -7,7 +7,9 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 function createPrisma() {
   const connectionString = resolveDatabaseUrl();
-  const adapter = new PrismaPg(connectionString);
+  // A transação prende uma conexão. O Prisma busca relações em paralelo;
+  // o pg só aceita isso com pipeline, senão avisa e no pg 9 passa a falhar.
+  const adapter = new PrismaPg({ connectionString, pipeline: true });
   return new PrismaClient({ adapter, log: ["error"] });
 }
 

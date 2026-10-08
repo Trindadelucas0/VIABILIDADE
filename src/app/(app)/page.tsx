@@ -8,7 +8,22 @@ import { Badge, Button, EmptyState, ErrorState, PageIntro, Skeleton } from "../.
 import { api, ApiError } from "../../lib/api";
 import { formatMargin } from "../../lib/format";
 import { CLASS_LABEL } from "../../lib/labels";
-import type { DashboardData, User } from "../../lib/types";
+import type { Classification, DashboardData, User } from "../../lib/types";
+
+const MARGIN_TEXT: Record<Classification, string> = {
+  RUIM: "text-danger",
+  FRACO: "text-warn",
+  MEDIO: "text-accent",
+  BOM: "text-ok",
+  EXCELENTE: "text-ok",
+};
+
+function classificationBadge(classification: Classification): "danger" | "warn" | "info" | "ok" {
+  if (classification === "RUIM") return "danger";
+  if (classification === "FRACO") return "warn";
+  if (classification === "MEDIO") return "info";
+  return "ok";
+}
 
 function Dashboard() {
   const params = useSearchParams();
@@ -64,7 +79,7 @@ function Dashboard() {
       {error ? <ErrorState message={error} onRetry={() => router.refresh()} /> : null}
       {data && !loading ? (
         <>
-          <section className="grid gap-3">
+          <section className="section-card section-card-roomy">
             <h2 className="section-title">Principais oportunidades</h2>
             {data.opportunities.length === 0 ? (
               data.counts.products === 0 ? (
@@ -87,7 +102,7 @@ function Dashboard() {
                 />
               )
             ) : (
-              <ol className="grid gap-2">
+              <ol className="grid gap-3">
                 {data.opportunities.map((item, index) => (
                   <li key={item.id}>
                     <Link
@@ -98,11 +113,11 @@ function Dashboard() {
                         <span className="font-semibold text-ink">
                           {index + 1}. {item.name || "Sem nome"}
                         </span>
-                        <Badge tone={item.classification === "EXCELENTE" || item.classification === "BOM" ? "ok" : "info"}>
+                        <Badge tone={classificationBadge(item.classification)}>
                           {CLASS_LABEL[item.classification]}
                         </Badge>
                       </span>
-                      <span className="text-display shrink-0">{formatMargin(item.margin)}</span>
+                      <span className={`text-display shrink-0 ${MARGIN_TEXT[item.classification]}`}>{formatMargin(item.margin)}</span>
                     </Link>
                   </li>
                 ))}
